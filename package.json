@@ -1,0 +1,19 @@
+{
+  "name": "linux-dev-tools-hub",
+  "version": "1.0.0",
+  "description": "A curated showcase of open-source Linux CLI utilities and developer tools.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -l 3000 .",
+    "dev": "npx serve -l 3000 ."
+  },
+  "keywords": [
+    "linux",
+    "cli",
+    "developer-tools",
+    "supabase",
+    "open-source"
+  ],
+  "author": "",
+  "license": "MIT"
+}
