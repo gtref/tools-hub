@@ -97,7 +97,7 @@
     const SUPABASE_URL = 'https://bdehlwonhpafijrqsels.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_yJf1BHTZL8RObCfTIP45ew_6dhUrAg2';
 
-    // FIXED: use global supabase client, do NOT redeclare
+    /* FIXED: correct global Supabase client creation */
     window.supabase = window.supabase || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadPackages() {
@@ -167,7 +167,11 @@
     }
 
     function escapeHtml(str) {
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     loadPackages();
