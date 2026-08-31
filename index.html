@@ -713,7 +713,7 @@
       const categoryFilter = document.getElementById("category-filter").value;
       const sortFilter = document.getElementById("sort-filter").value;
 
-      let query = supabase.from("packages").select("*, upvotes(count, user_id)");
+      let query = supabase.from("packages").select("*, upvotes(id, user_id)");
 
       if (categoryFilter !== "ALL") {
         query = query.eq("category", categoryFilter);
