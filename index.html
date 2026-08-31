@@ -100,6 +100,7 @@
     /* FIXED: correct global Supabase client creation */
     window.supabase = window.supabase || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
     async function loadPackages() {
       const { data: pkgs, error } = await supabase
         .from('packages')
