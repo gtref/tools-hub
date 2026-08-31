@@ -94,7 +94,13 @@
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .user-pill:hover {
+      border-color: var(--link);
     }
 
     .user-pill span {
@@ -374,7 +380,7 @@
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
       padding: 24px;
       box-shadow: var(--shadow);
       transform: translateY(10px);
@@ -390,7 +396,6 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
-
     }
 
     .modal-header h3 {
@@ -427,6 +432,41 @@
       justify-content: flex-end;
       gap: 10px;
       margin-top: 24px;
+    }
+
+    /* Profile Card in Modal */
+    .profile-card {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .profile-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #21262d;
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--link);
+    }
+
+    .profile-info h4 {
+      font-size: 1.1rem;
+      color: var(--text-heading);
+    }
+
+    .profile-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
 
     /* Toast Notification */
@@ -577,6 +617,38 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>User Profile</h3>
+        <button class="close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="profile-card">
+        <div class="profile-avatar">
+          <i class="fa-solid fa-user-astronaut"></i>
+        </div>
+        <div class="profile-info">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h4 id="profile-username" style="margin:0">@developer</h4>
+            <span id="profile-plan-badge" class="badge" style="background: rgba(35, 134, 54, 0.2); color: #3fb950; border-color: var(--accent); text-transform: uppercase; font-weight: 700;">FREE</span>
+          </div>
+          <p id="profile-email">email@example.com</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your Submissions</label>
+        <div id="user-submissions-list" style="max-height: 180px; overflow-y: auto; background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px;">
+          <small style="color: var(--text-muted)">Loading your packages...</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
+        <button type="button" class="btn btn-danger" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Submit Package Modal -->
   <div class="modal-overlay" id="submit-modal">
     <div class="modal">
@@ -630,15 +702,38 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
+    let currentUserProfile = null;
     let isSignUpMode = false;
     let cachedPackages = [];
 
     // Initialize Auth state listener
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
       currentUser = session?.user || null;
+      if (currentUser) {
+        await fetchUserProfile();
+      } else {
+        currentUserProfile = null;
+      }
       renderAuthControls();
       loadPackages();
     });
+
+    async function fetchUserProfile() {
+      if (!currentUser) return;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!error && data) {
+        currentUserProfile = data;
+      } else {
+        currentUserProfile = {
+          username: currentUser.email.split('@')[0]
+        };
+      }
+    }
 
     function showToast(message, isError = false) {
       const container = document.getElementById('toast-container');
@@ -658,10 +753,11 @@
       const authorInput = document.getElementById('author');
 
       if (currentUser) {
-        const username = currentUser.email.split('@')[0];
+        const username = currentUserProfile?.username || currentUser.email.split('@')[0];
         controls.innerHTML = `
-          <div class="user-pill">
-            <i class="fa-solid fa-user"></i> <span>${escapeHtml(username)}</span>
+          <div class="user-pill" onclick="openProfileModal()">
+            <i class="fa-solid fa-user"></i>
+            <span>@${escapeHtml(username)}</span>
           </div>
           <button class="btn btn-outline btn-sm" onclick="handleSignOut()">
             <i class="fa-solid fa-right-from-bracket"></i> Sign Out
@@ -690,7 +786,12 @@
           showToast("Account created successfully! You are now logged in.");
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) throw error;
+          if (error) {
+            if (error.message.includes("Invalid login credentials")) {
+              throw new Error("Invalid email or password. Please check your credentials.");
+            }
+            throw error;
+          }
           showToast("Welcome back!");
         }
         closeAuthModal();
@@ -700,6 +801,7 @@
     }
 
     async function handleSignOut() {
+      closeProfileModal();
       const { error } = await supabase.auth.signOut();
       if (error) {
         showToast(error.message, true);
@@ -730,7 +832,6 @@
         return;
       }
 
-      // Format & calculate upvote counts
       let processed = (pkgs || []).map(p => {
         const upvoteList = p.upvotes || [];
         const userHasVoted = currentUser ? upvoteList.some(u => u.user_id === currentUser.id) : false;
@@ -787,7 +888,7 @@
             </div>
             <p class="card-desc">${escapeHtml(p.description)}</p>
             <div class="card-meta">
-              <span><i class="fa-solid fa-user-ninja"></i> ${escapeHtml(p.submitted_by || "anonymous")}</span>
+              <span><i class="fa-solid fa-user"></i> ${escapeHtml(p.submitted_by || "anonymous")}</span>
               <span><i class="fa-regular fa-clock"></i> ${formatTimeAgo(p.created_at)}</span>
             </div>
           </div>
@@ -797,6 +898,50 @@
           </button>
         </div>
       `).join("");
+    }
+
+    async function openProfileModal() {
+      if (!currentUser) return;
+      const username = currentUserProfile?.username || currentUser.email.split('@')[0];
+      const plan = currentUserProfile?.plan || 'free';
+
+      document.getElementById('profile-username').textContent = `@${username}`;
+      document.getElementById('profile-email').textContent = currentUser.email;
+
+      const planBadge = document.getElementById('profile-plan-badge');
+      if (planBadge) {
+        planBadge.textContent = plan.toUpperCase();
+        if (plan === 'pro') {
+          planBadge.style.background = 'linear-gradient(135deg, #1f6feb, #8957e5)';
+          planBadge.style.color = '#ffffff';
+          planBadge.style.borderColor = '#8957e5';
+        } else {
+          planBadge.style.background = 'rgba(35, 134, 54, 0.2)';
+          planBadge.style.color = '#3fb950';
+          planBadge.style.borderColor = 'var(--accent)';
+        }
+      }
+
+      const modal = document.getElementById('profile-modal');
+      modal.classList.add('active');
+
+      const userPkgs = cachedPackages.filter(p => p.user_id === currentUser.id);
+      const subList = document.getElementById('user-submissions-list');
+
+      if (userPkgs.length === 0) {
+        subList.innerHTML = `<small style="color:var(--text-muted)">You haven't submitted any packages yet.</small>`;
+      } else {
+        subList.innerHTML = userPkgs.map(p => `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--card-border);">
+            <strong style="font-size:0.9rem; color:var(--link)">${escapeHtml(p.title)}</strong>
+            <small style="color:var(--text-muted)">▲ ${p.upvote_count}</small>
+          </div>
+        `).join("");
+      }
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profile-modal').classList.remove('active');
     }
 
     async function submitPackage(e) {
@@ -831,7 +976,6 @@
 
     async function upvote(pkgId, currentlyVoted) {
       if (!currentUser) {
-        // Allow anonymous upvotes or prompt login
         const { error } = await supabase.from("upvotes").insert([{ package_id: pkgId }]);
         if (error) {
           showToast(error.message, true);
@@ -843,7 +987,6 @@
       }
 
       if (currentlyVoted) {
-        // Remove vote
         const { error } = await supabase
           .from("upvotes")
           .delete()
@@ -857,7 +1000,6 @@
           loadPackages();
         }
       } else {
-        // Add vote
         const { error } = await supabase
           .from("upvotes")
           .insert([{ package_id: pkgId, user_id: currentUser.id }]);
@@ -932,6 +1074,8 @@
     window.handleSignOut = handleSignOut;
     window.openSubmitModal = openSubmitModal;
     window.closeSubmitModal = closeSubmitModal;
+    window.openProfileModal = openProfileModal;
+    window.closeProfileModal = closeProfileModal;
     window.submitPackage = submitPackage;
     window.upvote = upvote;
     window.loadPackages = loadPackages;
