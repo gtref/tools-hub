@@ -97,8 +97,6 @@
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  window.supabase = supabase;
-
   async function loadPackages() {
     const { data: pkgs, error } = await supabase
       .from("packages")
@@ -133,6 +131,7 @@
 
   async function submitPackage(e) {
     e.preventDefault();
+
     const title = document.getElementById("title").value;
     const description = document.getElementById("desc").value;
     const repo_url = document.getElementById("url").value;
@@ -172,6 +171,11 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
   }
+
+  // ⭐ Make functions global so the form can call them
+  window.submitPackage = submitPackage;
+  window.upvote = upvote;
+  window.loadPackages = loadPackages;
 
   loadPackages();
 </script>
