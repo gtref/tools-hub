@@ -92,90 +92,92 @@
   </form>
 
   <div id="package-list" style="margin-top: 24px;">Loading packages...</div>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  <script>
-    const SUPABASE_URL = 'https://bdehlwonhpafijrqsels.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_yJf1BHTZL8RObCfTIP45ew_6dhUrAg2';
+  const SUPABASE_URL = "https://bdehlwonhpafijrqsels.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_yJf1BHTZL8RObCfTIP45ew_6dhUrAg2";
 
-    /* FIXED: correct global Supabase client creation */
-    window.supabase = window.supabase || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  window.supabase = supabase;
 
-    async function loadPackages() {
-      const { data: pkgs, error } = await supabase
-        .from('packages')
-        .select('*, upvotes(count)')
-        .order('created_at', { ascending: false });
+  async function loadPackages() {
+    const { data: pkgs, error } = await supabase
+      .from("packages")
+      .select("*, upvotes(count)")
+      .order("created_at", { ascending: false });
 
-      const list = document.getElementById('package-list');
+    const list = document.getElementById("package-list");
 
-      if (error) { 
-        list.innerHTML = `<p style="color:var(--danger)">Failed to load: ${error.message}</p>`; 
-        return; 
-      }
+    if (error) {
+      list.innerHTML = `<p style="color:var(--danger)">Failed to load: ${error.message}</p>`;
+      return;
+    }
 
-      if (!pkgs || pkgs.length === 0) {
-        list.innerHTML = '<p>No packages submitted yet.</p>';
-        return;
-      }
+    if (!pkgs || pkgs.length === 0) {
+      list.innerHTML = "<p>No packages submitted yet.</p>";
+      return;
+    }
 
-      list.innerHTML = pkgs.map(p => `
-        <div class="card">
-          <div>
-            <h4 style="margin:0">
-              <a href="${escapeHtml(p.repo_url)}" target="_blank" style="color:#58a6ff; text-decoration:none;">${escapeHtml(p.title)}</a>
-            </h4>
-            <p style="margin:4px 0; font-size:14px;">${escapeHtml(p.description)}</p>
-            <small style="color:#8b949e">Submitted by @${escapeHtml(p.submitted_by || 'anonymous')}</small>
-          </div>
-          <button class="vote-btn" onclick="upvote('${p.id}')">▲ ${p.upvotes[0]?.count || 0}</button>
+    list.innerHTML = pkgs.map(p => `
+      <div class="card">
+        <div>
+          <h4 style="margin:0">
+            <a href="${escapeHtml(p.repo_url)}" target="_blank" style="color:#58a6ff; text-decoration:none;">${escapeHtml(p.title)}</a>
+          </h4>
+          <p style="margin:4px 0; font-size:14px;">${escapeHtml(p.description)}</p>
+          <small style="color:#8b949e">Submitted by @${escapeHtml(p.submitted_by || "anonymous")}</small>
         </div>
-      `).join('');
-    }
+        <button class="vote-btn" onclick="upvote('${p.id}')">▲ ${p.upvotes[0]?.count || 0}</button>
+      </div>
+    `).join("");
+  }
 
-    async function submitPackage(e) {
-      e.preventDefault();
-      const title = document.getElementById('title').value;
-      const description = document.getElementById('desc').value;
-      const repo_url = document.getElementById('url').value;
-      const submitted_by = document.getElementById('author').value;
+  async function submitPackage(e) {
+    e.preventDefault();
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("desc").value;
+    const repo_url = document.getElementById("url").value;
+    const submitted_by = document.getElementById("author").value;
 
-      const { error } = await supabase.from('packages').insert([{
-        title, 
-        description, 
-        repo_url,
-        submitted_by
-      }]);
+    const { error } = await supabase.from("packages").insert([{
+      title,
+      description,
+      repo_url,
+      submitted_by
+    }]);
 
-      if (error) {
-        alert('Error submitting: ' + error.message);
-      } else { 
-        e.target.reset(); 
-        loadPackages(); 
-      }
-    }
-
-    async function upvote(pkgId) {
-      const { error } = await supabase.from('upvotes').insert([{ 
-        package_id: pkgId 
-      }]);
-
-      if (error) {
-        console.error('Error upvoting:', error.message);
-      }
-      
+    if (error) {
+      alert("Error submitting: " + error.message);
+    } else {
+      e.target.reset();
       loadPackages();
     }
+  }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+  async function upvote(pkgId) {
+    const { error } = await supabase.from("upvotes").insert([{ 
+      package_id: pkgId 
+    }]);
+
+    if (error) {
+      console.error("Error upvoting:", error.message);
     }
 
     loadPackages();
-  </script>
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  loadPackages();
+</script>
+
 </body>
 </html>
