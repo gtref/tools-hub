@@ -71,6 +71,8 @@
       margin-top: 16px; 
     }
   </style>
+
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -94,9 +96,9 @@
   <script>
     const SUPABASE_URL = 'https://bdehlwonhpafijrqsels.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_yJf1BHTZL8RObCfTIP45ew_6dhUrAg2';
-    
-    window.supabase = window.supabase || supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const supabase = window.supabase;
+
+    // FIXED: use global supabase client, do NOT redeclare
+    window.supabase = window.supabase || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadPackages() {
       const { data: pkgs, error } = await supabase
