@@ -75,15 +75,32 @@ create policy "Users can remove their upvote" on public.upvotes
 -- 9. Automatic Profile Creation Trigger on Sign-up
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  base_username text;
+  final_username text;
 begin
+  base_username := coalesce(nullif(split_part(new.email, '@', 1), ''), 'developer');
+  final_username := base_username;
+
+  -- Ensure username uniqueness by appending short user id suffix if base_username exists
+  if exists (select 1 from public.profiles where username = final_username) then
+    final_username := base_username || '_' || substring(new.id::text, 1, 6);
+  end if;
+
   insert into public.profiles (id, username, avatar_url)
   values (
     new.id,
-    coalesce(split_part(new.email, '@', 1), 'developer'),
+    final_username,
     'https://api.dicebear.com/7.x/identicon/svg?seed=' || new.id
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update set
+    username = excluded.username,
+    avatar_url = excluded.avatar_url;
+
   return new;
+exception
+  when others then
+    return new;
 end;
 $$ language plpgsql security definer;
 
