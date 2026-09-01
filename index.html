@@ -813,8 +813,9 @@
       if (!error && data) {
         currentUserProfile = data;
       } else {
+        const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'developer';
         currentUserProfile = {
-          username: currentUser.email.split('@')[0]
+          username: emailPrefix
         };
       }
     }
@@ -883,18 +884,32 @@
         if (isSignUpMode) {
           const { data, error } = await supabase.auth.signUp({ email, password });
           if (error) throw error;
-          showToast("Account created successfully! You are now logged in.");
+
+          if (data.session) {
+            showToast("Account created successfully! You are now logged in.");
+            closeAuthModal();
+          } else if (data.user) {
+            showToast("Account created! Please check your email for confirmation or sign in.");
+            openAuthModal(false);
+            document.getElementById('auth-email').value = email;
+          } else {
+            showToast("Account creation submitted.");
+            closeAuthModal();
+          }
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
-            if (error.message.includes("Invalid login credentials")) {
+            if (error.message.includes("Invalid login credentials") || error.status === 400) {
               throw new Error("Invalid email or password. Please check your credentials.");
+            }
+            if (error.message.includes("Email not confirmed")) {
+              throw new Error("Email not confirmed. Please check your email inbox or backend settings.");
             }
             throw error;
           }
           showToast("Welcome back!");
+          closeAuthModal();
         }
-        closeAuthModal();
       } catch (err) {
         showToast(err.message, true);
       }
