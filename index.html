@@ -861,6 +861,9 @@
 
     async function handleAuthSubmit(e) {
       e.preventDefault();
+      const submitBtn = document.getElementById('auth-submit-btn');
+      if (submitBtn.disabled) return;
+
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
 
@@ -880,12 +883,16 @@
         return;
       }
 
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Processing...";
+
       try {
         if (isSignUpMode) {
           const { data, error } = await supabase.auth.signUp({ email, password });
           if (error) {
             if (error.status === 429 || (error.message && error.message.toLowerCase().includes("rate limit"))) {
-              throw new Error("Too many sign-up requests. Please wait a moment and try again.");
+              throw new Error("Too many sign-up requests. Rate limit reached — please wait a minute before retrying.");
             }
             throw error;
           }
@@ -905,7 +912,7 @@
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
             if (error.status === 429 || (error.message && error.message.toLowerCase().includes("rate limit"))) {
-              throw new Error("Too many sign-in attempts. Please wait a moment and try again.");
+              throw new Error("Too many sign-in attempts. Rate limit reached — please wait a minute before retrying.");
             }
             if (error.message.includes("Invalid login credentials") || error.status === 400) {
               throw new Error("Invalid email or password. Please check your credentials.");
@@ -920,6 +927,9 @@
         }
       } catch (err) {
         showToast(err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
     }
 
