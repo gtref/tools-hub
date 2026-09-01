@@ -883,27 +883,21 @@
       try {
         if (isSignUpMode) {
           const { data, error } = await supabase.auth.signUp({ email, password });
-          if (error) throw error;
-
-          if (data.session) {
-            showToast("Account created successfully! You are now logged in.");
-            closeAuthModal();
-          } else if (data.user) {
-            showToast("Account created! Please check your email for confirmation or sign in.");
-            openAuthModal(false);
-            document.getElementById('auth-email').value = email;
-          } else {
-            showToast("Account creation submitted.");
-            closeAuthModal();
+          if (error) {
+            if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
+              throw new Error("Email rate limit exceeded by Supabase. Please wait a minute or sign in with existing credentials.");
+            }
+            throw error;
           }
+          showToast("Account created successfully! You are now logged in.");
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
             if (error.message.includes("Invalid login credentials") || error.status === 400) {
               throw new Error("Invalid email or password. Please check your credentials.");
             }
-            if (error.message.includes("Email not confirmed")) {
-              throw new Error("Email not confirmed. Please check your email inbox or backend settings.");
+            if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
+              throw new Error("Email rate limit exceeded by Supabase. Please wait a minute before trying again.");
             }
             throw error;
           }
