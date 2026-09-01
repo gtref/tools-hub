@@ -32,7 +32,7 @@ Or open `index.html` directly in any modern browser! The single-file architectur
 
 ---
 
-## 🗄️ Database Setup (Supabase SQL)
+## 🗄️ Database Setup & Auth Configuration (Supabase SQL)
 
 To set up your own Supabase database backend:
 
@@ -40,7 +40,12 @@ To set up your own Supabase database backend:
 2. Go to the **SQL Editor** in your Supabase dashboard.
 3. Paste and run the contents of `schema.sql`.
 
-The schema creates `packages` and `upvotes` tables with foreign keys linked to `auth.users`, configures Row Level Security (RLS) policies, and sets up indexes for fast queries.
+The schema creates `profiles` (with `free`/`pro` plans), `packages`, and `upvotes` tables with foreign keys linked to `auth.users`, configures Row Level Security (RLS) policies, automatic profile creation triggers, and performance indexes.
+
+### ⚠️ Resolving Supabase "Email Rate Limit Exceeded" Errors
+If you encounter `429 Too Many Requests (email rate limit exceeded)` errors during testing:
+- Go to your Supabase Dashboard -> **Authentication -> Rate Limits**.
+- Increase the **Email Rate Limit** threshold or temporarily disable **Enable Email Confirmations** under **Authentication -> Providers -> Email** during development.
 
 ---
 
