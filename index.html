@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Linux Dev Tools Hub</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💻</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐧</text></svg>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -22,8 +22,8 @@
       --tag-bg: #21262d;
       --input-bg: #0d1117;
       --input-border: #30363d;
-      --radius: 8px;
-      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --radius: 10px;
+      --shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -43,17 +43,17 @@
     }
 
     header {
-      background: #161b22;
+      background: rgba(22, 27, 34, 0.85);
       border-bottom: 1px solid var(--card-border);
       padding: 16px 24px;
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
     }
 
     .header-container {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
@@ -63,21 +63,23 @@
     .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 1.25rem;
-      font-weight: 700;
+      gap: 12px;
+      font-size: 1.3rem;
+      font-weight: 800;
       color: var(--text-heading);
       text-decoration: none;
+      letter-spacing: -0.5px;
     }
 
     .logo-icon {
       background: linear-gradient(135deg, #238636, #1f6feb);
-      padding: 8px 10px;
+      padding: 8px 12px;
       border-radius: var(--radius);
       color: #fff;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 0 12px rgba(31, 111, 235, 0.4);
     }
 
     .auth-section {
@@ -89,7 +91,7 @@
     .user-pill {
       background: var(--tag-bg);
       border: 1px solid var(--card-border);
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -97,7 +99,7 @@
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      transition: border-color 0.2s ease;
+      transition: all 0.2s ease;
       max-width: 180px;
       overflow: hidden;
       white-space: nowrap;
@@ -105,6 +107,8 @@
 
     .user-pill:hover {
       border-color: var(--link);
+      color: var(--link);
+      box-shadow: 0 0 10px rgba(88, 166, 255, 0.15);
     }
 
     .user-pill span {
@@ -116,34 +120,87 @@
     }
 
     main {
-      max-width: 900px;
+      max-width: 960px;
       width: 100%;
-      margin: 30px auto;
+      margin: 32px auto;
       padding: 0 20px;
       flex: 1;
     }
 
     .hero {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(31, 111, 235, 0.15);
+      color: #58a6ff;
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 16px;
     }
 
     .hero h1 {
-      font-size: 2.2rem;
+      font-size: 2.5rem;
+      font-weight: 800;
       color: var(--text-heading);
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      letter-spacing: -0.8px;
+      background: linear-gradient(180deg, #ffffff 0%, #c9d1d9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero p {
       color: var(--text-muted);
-      font-size: 1.05rem;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }
+
+    /* Live Stats Bar */
+    .hero-stats {
+      display: inline-flex;
+      align-items: center;
+      gap: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 10px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .stat-item strong {
+      color: var(--text-heading);
+      font-size: 1rem;
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--card-border);
     }
 
     .btn {
       background: var(--accent);
       color: #ffffff;
       border: 1px solid rgba(240, 246, 252, 0.1);
-      padding: 9px 16px;
+      padding: 9px 18px;
       border-radius: var(--radius);
       font-weight: 600;
       font-size: 0.9rem;
@@ -156,6 +213,12 @@
 
     .btn:hover {
       background: var(--accent-hover);
+      box-shadow: 0 0 12px rgba(46, 160, 67, 0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .btn-secondary {
@@ -192,7 +255,7 @@
     }
 
     .btn-sm {
-      padding: 5px 10px;
+      padding: 5px 12px;
       font-size: 0.8rem;
     }
 
@@ -217,20 +280,20 @@
 
     .search-box i {
       position: absolute;
-      left: 12px;
+      left: 14px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-muted);
     }
 
     .search-box input {
-      padding-left: 36px;
+      padding-left: 38px;
       margin-bottom: 0;
     }
 
     .filter-options {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
     }
 
@@ -243,7 +306,7 @@
       font-size: 0.9rem;
       width: 100%;
       outline: none;
-      transition: border-color 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     select {
@@ -260,22 +323,24 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 18px 20px;
+      padding: 20px;
       margin-bottom: 16px;
       display: flex;
       gap: 16px;
       justify-content: space-between;
       align-items: center;
-      transition: border-color 0.2s ease, transform 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .card:hover {
       border-color: #484f58;
       background: var(--card-hover);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .card-content {
       flex: 1;
+      min-width: 0;
     }
 
     .card-title-row {
@@ -286,8 +351,8 @@
     }
 
     .card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
+      font-size: 1.15rem;
+      font-weight: 700;
     }
 
     .card-title a {
@@ -307,15 +372,16 @@
       color: var(--text-muted);
       border: 1px solid var(--card-border);
       font-size: 0.75rem;
-      padding: 2px 8px;
+      padding: 2px 10px;
       border-radius: 12px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .card-desc {
       color: var(--text);
       font-size: 0.95rem;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      word-break: break-word;
     }
 
     .card-meta {
@@ -324,14 +390,15 @@
       display: flex;
       gap: 14px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .vote-btn {
       background: #21262d;
       border: 1px solid var(--card-border);
       color: var(--text);
-      min-width: 64px;
-      height: 60px;
+      min-width: 68px;
+      height: 64px;
       border-radius: var(--radius);
       display: flex;
       flex-direction: column;
@@ -339,13 +406,13 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .vote-btn:hover {
       border-color: var(--link);
       color: var(--link);
-      background: rgba(88, 166, 255, 0.05);
+      background: rgba(88, 166, 255, 0.08);
     }
 
     .vote-btn.voted {
@@ -355,7 +422,7 @@
     }
 
     .vote-btn i {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       margin-bottom: 2px;
     }
 
@@ -366,8 +433,8 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -387,7 +454,7 @@
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
       padding: 24px;
       box-shadow: var(--shadow);
       transform: translateY(10px);
@@ -406,7 +473,7 @@
     }
 
     .modal-header h3 {
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       color: var(--text-heading);
     }
 
@@ -414,8 +481,9 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       cursor: pointer;
+      transition: color 0.2s ease;
     }
 
     .close-btn:hover {
@@ -546,7 +614,7 @@
 
     footer {
       border-top: 1px solid var(--card-border);
-      padding: 20px 0;
+      padding: 24px 0;
       text-align: center;
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -576,8 +644,28 @@
 
   <main>
     <section class="hero">
+      <div class="hero-badge">
+        <i class="fa-solid fa-sparkles"></i> Open Source Community Showcase
+      </div>
       <h1>Discover & Share Essential Linux Tools</h1>
-      <p>A curated showcase of open-source CLI utilities, system tweaks, and developer tools.</p>
+      <p>A curated directory of open-source CLI utilities, system tweaks, and developer productivity software.</p>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <i class="fa-solid fa-cubes" style="color: var(--link);"></i>
+          <span id="stat-total-tools">0</span> <span>Tools</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <i class="fa-solid fa-fire" style="color: #f0883e;"></i>
+          <span id="stat-total-upvotes">0</span> <span>Upvotes</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <i class="fa-solid fa-tags" style="color: #a371f7;"></i>
+          <span>5 Categories</span>
+        </div>
+      </div>
     </section>
 
     <div class="controls-panel">
@@ -838,7 +926,7 @@
       const authorInput = document.getElementById('author');
 
       if (currentUser) {
-        const username = currentUserProfile?.username || currentUser.email.split('@')[0];
+        const username = currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer');
         controls.innerHTML = `
           <div class="user-pill" onclick="openProfileModal()">
             <i class="fa-solid fa-user"></i>
@@ -976,6 +1064,15 @@
         };
       });
 
+      // Update hero live stats
+      const totalToolsElem = document.getElementById('stat-total-tools');
+      const totalUpvotesElem = document.getElementById('stat-total-upvotes');
+      if (totalToolsElem) totalToolsElem.textContent = processed.length;
+      if (totalUpvotesElem) {
+        const grandTotalVotes = processed.reduce((acc, curr) => acc + curr.upvote_count, 0);
+        totalUpvotesElem.textContent = grandTotalVotes;
+      }
+
       if (userFilter === "MINE" && currentUser) {
         processed = processed.filter(p => p.user_id === currentUser.id);
       } else if (userFilter === "UPVOTED" && currentUser) {
@@ -1052,11 +1149,11 @@
 
     async function openProfileModal() {
       if (!currentUser) return;
-      const username = currentUserProfile?.username || currentUser.email.split('@')[0];
+      const username = currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer');
       const plan = currentUserProfile?.plan || 'free';
 
       document.getElementById('profile-username').textContent = `@${username}`;
-      document.getElementById('profile-email').textContent = currentUser.email;
+      document.getElementById('profile-email').textContent = currentUser.email || '';
 
       const editUsernameInput = document.getElementById('edit-username-input');
       if (editUsernameInput) {
@@ -1188,7 +1285,7 @@
       const category = document.getElementById("category").value;
       const description = document.getElementById("desc").value.trim();
       const repo_url = document.getElementById("url").value.trim();
-      const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || currentUser.email.split('@')[0]}`;
+      const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer')}`;
 
       const payload = {
         title,
@@ -1251,10 +1348,15 @@
       const title = document.getElementById('auth-modal-title');
       const toggleBtn = document.getElementById('auth-toggle-btn');
       const submitBtn = document.getElementById('auth-submit-btn');
+      const passwordInput = document.getElementById('auth-password');
 
       title.textContent = isSignUpMode ? 'Create Account' : 'Sign In';
       submitBtn.textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
       toggleBtn.textContent = isSignUpMode ? 'Already have an account? Sign In' : 'Need an account? Sign Up';
+
+      if (passwordInput) {
+        passwordInput.setAttribute('autocomplete', isSignUpMode ? 'new-password' : 'current-password');
+      }
 
       modal.classList.add('active');
     }
