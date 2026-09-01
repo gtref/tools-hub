@@ -813,8 +813,9 @@
       if (!error && data) {
         currentUserProfile = data;
       } else {
+        const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'developer';
         currentUserProfile = {
-          username: currentUser.email.split('@')[0]
+          username: emailPrefix
         };
       }
     }
@@ -892,7 +893,7 @@
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
-            if (error.message.includes("Invalid login credentials")) {
+            if (error.message.includes("Invalid login credentials") || error.status === 400) {
               throw new Error("Invalid email or password. Please check your credentials.");
             }
             if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
@@ -901,8 +902,8 @@
             throw error;
           }
           showToast("Welcome back!");
+          closeAuthModal();
         }
-        closeAuthModal();
       } catch (err) {
         showToast(err.message, true);
       }
