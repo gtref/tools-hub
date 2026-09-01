@@ -97,6 +97,9 @@
       gap: 8px;
       cursor: pointer;
       transition: border-color 0.2s ease;
+      max-width: 180px;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .user-pill:hover {
@@ -106,6 +109,9 @@
     .user-pill span {
       color: var(--text-heading);
       font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     main {
@@ -444,11 +450,13 @@
       display: flex;
       align-items: center;
       gap: 16px;
+      overflow: hidden;
     }
 
     .profile-avatar {
       width: 56px;
       height: 56px;
+      min-width: 56px;
       border-radius: 50%;
       background: #21262d;
       border: 1px solid var(--card-border);
@@ -459,14 +467,26 @@
       color: var(--link);
     }
 
+    .profile-info {
+      min-width: 0;
+      flex: 1;
+    }
+
     .profile-info h4 {
       font-size: 1.1rem;
       color: var(--text-heading);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .profile-info p {
       font-size: 0.85rem;
       color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-all;
     }
 
     /* Toast Notification */
@@ -575,6 +595,12 @@
           <option value="Security">Security</option>
         </select>
 
+        <select id="user-filter" onchange="loadPackages()">
+          <option value="ALL">All Packages</option>
+          <option value="MINE">My Submissions</option>
+          <option value="UPVOTED">My Upvoted</option>
+        </select>
+
         <select id="sort-filter" onchange="loadPackages()">
           <option value="upvotes">🔥 Most Upvoted</option>
           <option value="newest">✨ Newest First</option>
@@ -603,7 +629,7 @@
       <form id="auth-form" onsubmit="handleAuthSubmit(event)">
         <div class="form-group">
           <label for="auth-email">Email Address</label>
-          <input type="email" id="auth-email" required placeholder="developer@example.com">
+          <input type="email" id="auth-email" required maxlength="254" placeholder="developer@example.com">
         </div>
         <div class="form-group">
           <label for="auth-password">Password</label>
@@ -636,9 +662,35 @@
           <p id="profile-email">email@example.com</p>
         </div>
       </div>
+
+      <!-- Account Stats -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
+        <div style="background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--card-border);">
+          <div id="stat-submissions" style="font-size: 1.25rem; font-weight: 700; color: var(--text-heading);">0</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Tools</div>
+        </div>
+        <div style="background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--card-border);">
+          <div id="stat-upvotes-received" style="font-size: 1.25rem; font-weight: 700; color: var(--accent-hover);">0</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Votes Earned</div>
+        </div>
+        <div style="background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--card-border);">
+          <div id="stat-upvoted-count" style="font-size: 1.25rem; font-weight: 700; color: var(--link);">0</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Upvoted</div>
+        </div>
+      </div>
+
+      <!-- Edit Username -->
+      <div class="form-group">
+        <label for="edit-username-input">Update Username</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="edit-username-input" placeholder="new_username" style="flex: 1;" />
+          <button type="button" class="btn btn-secondary btn-sm" onclick="saveUsername()">Save</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Your Submissions</label>
-        <div id="user-submissions-list" style="max-height: 180px; overflow-y: auto; background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px;">
+        <div id="user-submissions-list" style="max-height: 150px; overflow-y: auto; background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px;">
           <small style="color: var(--text-muted)">Loading your packages...</small>
         </div>
       </div>
@@ -776,8 +828,24 @@
 
     async function handleAuthSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById('auth-email').value;
+      const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
+
+      if (!email) {
+        showToast("Email address is required.", true);
+        return;
+      }
+
+      if (email.length > 254) {
+        showToast("Email address is too long (maximum 254 characters).", true);
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showToast("Please enter a valid email address.", true);
+        return;
+      }
 
       try {
         if (isSignUpMode) {
@@ -821,6 +889,7 @@
     async function loadPackages() {
       const list = document.getElementById("package-list");
       const categoryFilter = document.getElementById("category-filter").value;
+      const userFilter = document.getElementById("user-filter") ? document.getElementById("user-filter").value : "ALL";
       const sortFilter = document.getElementById("sort-filter").value;
 
       let query = supabase.from("packages").select("*, upvotes(id, user_id)");
@@ -849,6 +918,14 @@
           voted: userHasVoted
         };
       });
+
+      if (userFilter === "MINE" && currentUser) {
+        processed = processed.filter(p => p.user_id === currentUser.id);
+      } else if (userFilter === "UPVOTED" && currentUser) {
+        processed = processed.filter(p => p.voted);
+      } else if ((userFilter === "MINE" || userFilter === "UPVOTED") && !currentUser) {
+        processed = [];
+      }
 
       if (sortFilter === "upvotes") {
         processed.sort((a, b) => b.upvote_count - a.upvote_count || new Date(b.created_at) - new Date(a.created_at));
@@ -898,6 +975,14 @@
             <div class="card-meta">
               <span><i class="fa-solid fa-user"></i> ${escapeHtml(p.submitted_by || "anonymous")}</span>
               <span><i class="fa-regular fa-clock"></i> ${formatTimeAgo(p.created_at)}</span>
+              <button class="btn btn-outline btn-sm" onclick="copyRepoLink('${escapeHtml(p.repo_url)}')" title="Copy URL" style="padding: 2px 8px; margin-left: 8px;">
+                <i class="fa-regular fa-copy"></i> Copy Link
+              </button>
+              ${currentUser && p.user_id === currentUser.id ? `
+                <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')" title="Delete package" style="padding: 2px 8px; margin-left: auto;">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              ` : ''}
             </div>
           </div>
           <button class="vote-btn ${p.voted ? 'voted' : ''}" onclick="upvote('${p.id}', ${p.voted})">
@@ -916,6 +1001,11 @@
       document.getElementById('profile-username').textContent = `@${username}`;
       document.getElementById('profile-email').textContent = currentUser.email;
 
+      const editUsernameInput = document.getElementById('edit-username-input');
+      if (editUsernameInput) {
+        editUsernameInput.value = username;
+      }
+
       const planBadge = document.getElementById('profile-plan-badge');
       if (planBadge) {
         planBadge.textContent = plan.toUpperCase();
@@ -930,10 +1020,31 @@
         }
       }
 
+      // Compute stats across all packages fetched
+      const { data: allPkgs } = await supabase.from("packages").select("*, upvotes(id, user_id)");
+      let mySubmittedCount = 0;
+      let totalVotesEarned = 0;
+      let myUpvotedCount = 0;
+
+      (allPkgs || []).forEach(p => {
+        const upvoteList = p.upvotes || [];
+        if (p.user_id === currentUser.id) {
+          mySubmittedCount++;
+          totalVotesEarned += upvoteList.length;
+        }
+        if (upvoteList.some(u => u.user_id === currentUser.id)) {
+          myUpvotedCount++;
+        }
+      });
+
+      document.getElementById('stat-submissions').textContent = mySubmittedCount;
+      document.getElementById('stat-upvotes-received').textContent = totalVotesEarned;
+      document.getElementById('stat-upvoted-count').textContent = myUpvotedCount;
+
       const modal = document.getElementById('profile-modal');
       modal.classList.add('active');
 
-      const userPkgs = cachedPackages.filter(p => p.user_id === currentUser.id);
+      const userPkgs = (allPkgs || []).filter(p => p.user_id === currentUser.id);
       const subList = document.getElementById('user-submissions-list');
 
       if (userPkgs.length === 0) {
@@ -941,25 +1052,86 @@
       } else {
         subList.innerHTML = userPkgs.map(p => `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--card-border);">
-            <strong style="font-size:0.9rem; color:var(--link)">${escapeHtml(p.title)}</strong>
-            <small style="color:var(--text-muted)">▲ ${p.upvote_count}</small>
+            <div>
+              <strong style="font-size:0.9rem; color:var(--link)">${escapeHtml(p.title)}</strong>
+              <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">▲ ${(p.upvotes || []).length}</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')" style="padding: 2px 6px; font-size: 0.75rem;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </div>
         `).join("");
       }
+    }
+
+    async function saveUsername() {
+      if (!currentUser) return;
+      const newUsername = document.getElementById('edit-username-input').value.trim();
+      if (!newUsername) {
+        showToast("Username cannot be empty.", true);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({ id: currentUser.id, username: newUsername, created_at: currentUserProfile?.created_at || new Date().toISOString() })
+        .select()
+        .single();
+
+      if (error) {
+        showToast("Error updating username: " + error.message, true);
+      } else {
+        showToast("Username updated successfully!");
+        currentUserProfile = data;
+        renderAuthControls();
+        openProfileModal();
+      }
+    }
+
+    function copyRepoLink(url) {
+      if (!url) return;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast("Link copied to clipboard!");
+      }).catch(() => {
+        showToast("Failed to copy link.", true);
+      });
     }
 
     function closeProfileModal() {
       document.getElementById('profile-modal').classList.remove('active');
     }
 
+    async function deletePackage(pkgId) {
+      if (!confirm("Are you sure you want to delete this tool submission?")) return;
+
+      const { error } = await supabase.from("packages").delete().eq("id", pkgId);
+
+      if (error) {
+        showToast("Error deleting package: " + error.message, true);
+      } else {
+        showToast("Package deleted successfully.");
+        await loadPackages();
+        if (document.getElementById('profile-modal').classList.contains('active')) {
+          openProfileModal();
+        }
+      }
+    }
+
     async function submitPackage(e) {
       e.preventDefault();
 
-      const title = document.getElementById("title").value;
+      if (!currentUser) {
+        showToast("You must be logged in to submit a package.", true);
+        closeSubmitModal();
+        openAuthModal(false);
+        return;
+      }
+
+      const title = document.getElementById("title").value.trim();
       const category = document.getElementById("category").value;
-      const description = document.getElementById("desc").value;
-      const repo_url = document.getElementById("url").value;
-      const submitted_by = document.getElementById("author").value;
+      const description = document.getElementById("desc").value.trim();
+      const repo_url = document.getElementById("url").value.trim();
+      const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || currentUser.email.split('@')[0]}`;
 
       const payload = {
         title,
@@ -967,7 +1139,7 @@
         description,
         repo_url,
         submitted_by,
-        user_id: currentUser ? currentUser.id : null
+        user_id: currentUser.id
       };
 
       const { error } = await supabase.from("packages").insert([payload]);
@@ -984,13 +1156,8 @@
 
     async function upvote(pkgId, currentlyVoted) {
       if (!currentUser) {
-        const { error } = await supabase.from("upvotes").insert([{ package_id: pkgId }]);
-        if (error) {
-          showToast(error.message, true);
-        } else {
-          showToast("Upvoted!");
-          loadPackages();
-        }
+        showToast("Please sign in or create an account to upvote packages.", true);
+        openAuthModal(false);
         return;
       }
 
@@ -1044,6 +1211,11 @@
     }
 
     function openSubmitModal() {
+      if (!currentUser) {
+        showToast("Please sign in or create an account to submit a package.", true);
+        openAuthModal(false);
+        return;
+      }
       document.getElementById('submit-modal').classList.add('active');
     }
 
@@ -1084,7 +1256,10 @@
     window.closeSubmitModal = closeSubmitModal;
     window.openProfileModal = openProfileModal;
     window.closeProfileModal = closeProfileModal;
+    window.saveUsername = saveUsername;
+    window.copyRepoLink = copyRepoLink;
     window.submitPackage = submitPackage;
+    window.deletePackage = deletePackage;
     window.upvote = upvote;
     window.loadPackages = loadPackages;
     window.handleSearch = handleSearch;
