@@ -1760,5 +1760,15 @@
   </script>
 
   <script src="https://webdevsocial.statuspage.io/embed/script.js"></script>
+  <script>
+    // Ensure Statuspage widget frame is displayed on screen when script loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof window.statusEmbedTest === 'function') {
+          window.statusEmbedTest();
+        }
+      }, 500);
+    });
+  </script>
 </body>
 </html>
