@@ -1138,7 +1138,6 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <h4 id="view-profile-username" style="margin:0">@user</h4>
             <span id="view-profile-plan" class="badge">FREE</span>
-            <span id="view-profile-state-badge" class="badge" style="display:none; background:rgba(218,54,51,0.2); color:var(--danger); border-color:var(--danger); font-weight:700;"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
           </div>
           <p id="view-profile-bio" style="color: var(--text); font-size: 0.85rem; margin-top: 4px; white-space: pre-wrap;"></p>
           <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 0.82rem;">
@@ -1185,7 +1184,6 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <h4 id="profile-username" style="margin:0">@developer</h4>
             <span id="profile-plan-badge" class="badge">FREE</span>
-            <span id="profile-state-badge" class="badge" style="display:none; background:rgba(218,54,51,0.2); color:var(--danger); border-color:var(--danger); font-weight:700;"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
           </div>
           <p id="profile-email">email@example.com</p>
         </div>
@@ -1530,7 +1528,6 @@
           id: currentUser.id,
           username: emailPrefix,
           plan: 'free',
-          state: 'user',
           bio: '',
           website_url: '',
           github_url: '',
@@ -2201,15 +2198,10 @@
         profile = data;
       }
 
-      activeViewingProfile = profile || { id: userId, username: fallbackUsername || 'developer', plan: 'free', state: 'user', bio: '', website_url: '', github_url: '', avatar_url: null };
+      activeViewingProfile = profile || { id: userId, username: fallbackUsername || 'developer', plan: 'free', bio: '', website_url: '', github_url: '', avatar_url: null };
 
       document.getElementById('view-profile-username').textContent = `@${activeViewingProfile.username}`;
       document.getElementById('view-profile-plan').textContent = (activeViewingProfile.plan || 'free').toUpperCase();
-
-      const viewStateBadge = document.getElementById('view-profile-state-badge');
-      if (viewStateBadge) {
-        viewStateBadge.style.display = (activeViewingProfile.state === 'admin') ? 'inline-block' : 'none';
-      }
       document.getElementById('view-profile-bio').textContent = activeViewingProfile.bio || 'No bio provided.';
 
       const webElem = document.getElementById('view-profile-web');
@@ -2334,7 +2326,6 @@
           website_url: newWeb,
           github_url: newGh,
           plan: currentUserProfile?.plan || 'free',
-          state: currentUserProfile?.state || 'user',
           created_at: currentUserProfile?.created_at || new Date().toISOString()
         })
         .select()
@@ -2344,7 +2335,7 @@
         showToast("Error updating profile: " + error.message, true);
       } else {
         showToast("Profile updated successfully!");
-        currentUserProfile = data || { username: newUsername, avatar_url: avatarUrl, bio: newBio, website_url: newWeb, github_url: newGh, plan: currentUserProfile?.plan || 'free', state: currentUserProfile?.state || 'user' };
+        currentUserProfile = data || { username: newUsername, avatar_url: avatarUrl, bio: newBio, website_url: newWeb, github_url: newGh, plan: currentUserProfile?.plan || 'free' };
         renderAuthControls();
         openProfileModal();
       }
@@ -2373,12 +2364,7 @@
 
       const devDashLinkBox = document.getElementById('developer-dashboard-link-box');
       if (devDashLinkBox) {
-        devDashLinkBox.style.display = (currentUserProfile?.state === 'admin' || username === 'ronan.nugget' || currentUser.email === 'ronan.nugget@gmail.com') ? 'block' : 'none';
-      }
-
-      const stateBadge = document.getElementById('profile-state-badge');
-      if (stateBadge) {
-        stateBadge.style.display = (currentUserProfile?.state === 'admin') ? 'inline-block' : 'none';
+        devDashLinkBox.style.display = (username === 'ronan.nugget' || currentUser.email === 'ronan.nugget@gmail.com') ? 'block' : 'none';
       }
 
       const planBadge = document.getElementById('profile-plan-badge');
@@ -2429,7 +2415,7 @@
 
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({ ...currentUserProfile, id: currentUser.id, username, plan: 'pro' })
+        .upsert({ ...currentUserProfile, id: currentUser.id, username, plan: 'pro', state: currentUserProfile?.state || 'user' })
         .select()
         .maybeSingle();
 
@@ -2474,6 +2460,14 @@
 
           if (data.user) {
             await validateAndMarkInvite(inviteCode, data.user.id);
+            const emailPrefix = email.split('@')[0];
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              username: emailPrefix,
+              plan: 'free',
+              state: 'user',
+              avatar_url: 'https://api.dicebear.com/7.x/identicon/svg?seed=' + data.user.id
+            }, { onConflict: 'id' });
             showToast("Account created successfully! Welcome to WebDev Social.");
             closeAuthModal();
           }

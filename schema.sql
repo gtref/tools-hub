@@ -1,4 +1,17 @@
--- 1. Drop existing tables completely (with CASCADE to remove old foreign keys)
+-- 1. Drop existing triggers, functions, storage objects, storage buckets, storage policies, and tables
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user() cascade;
+
+drop policy if exists "Anyone can read storage buckets" on storage.buckets;
+drop policy if exists "Authenticated users can create storage buckets" on storage.buckets;
+drop policy if exists "Anyone can read storage files" on storage.objects;
+drop policy if exists "Anyone can upload storage files" on storage.objects;
+drop policy if exists "Anyone can update storage files" on storage.objects;
+drop policy if exists "Anyone can delete storage files" on storage.objects;
+
+delete from storage.objects;
+delete from storage.buckets;
+
 drop table if exists public.tips cascade;
 drop table if exists public.invites cascade;
 drop table if exists public.messages cascade;
@@ -147,11 +160,12 @@ create policy "Anyone can send tips" on public.tips for insert with check (true)
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, username, avatar_url)
+  insert into public.profiles (id, username, avatar_url, state)
   values (
     new.id,
     coalesce(split_part(new.email, '@', 1), 'developer'),
-    'https://api.dicebear.com/7.x/identicon/svg?seed=' || new.id
+    'https://api.dicebear.com/7.x/identicon/svg?seed=' || new.id,
+    'user'
   )
   on conflict (id) do nothing;
   return new;
