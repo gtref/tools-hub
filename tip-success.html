@@ -4,12 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment Successful - WebDev Social</title>
-  <script>
-    // Preserve session_id if present and redirect to main app with payment=success
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id') || '';
-    const targetUrl = "index.html?payment=success" + (sessionId ? "&session_id=" + encodeURIComponent(sessionId) : "");
-    window.location.href = targetUrl;
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL = "https://bdehlwonhpafijrqsels.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_yJf1BHTZL8RObCfTIP45ew_6dhUrAg2";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function handleSuccessRedirect() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id') || '';
+
+      // Record tip in Supabase once top successful redirect happens
+      const pendingTipRaw = localStorage.getItem('pending_tip');
+      if (pendingTipRaw) {
+        try {
+          const pendingTip = JSON.parse(pendingTipRaw);
+          await supabase.from('tips').insert([{
+            sender_id: pendingTip.sender_id,
+            receiver_id: pendingTip.receiver_id,
+            amount: pendingTip.amount,
+            timestamp: pendingTip.timestamp || new Date().toISOString()
+          }]);
+          localStorage.removeItem('pending_tip');
+        } catch (e) {
+          console.error("Error saving successful tip:", e);
+          localStorage.removeItem('pending_tip');
+        }
+      }
+
+      const targetUrl = "index.html?payment=success" + (sessionId ? "&session_id=" + encodeURIComponent(sessionId) : "");
+      window.location.href = targetUrl;
+    }
+
+    handleSuccessRedirect();
   </script>
 </head>
 <body>
