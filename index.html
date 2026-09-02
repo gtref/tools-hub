@@ -333,9 +333,10 @@
     }
 
     .card:hover {
-      border-color: #484f58;
+      border-color: rgba(88, 166, 255, 0.4);
       background: var(--card-hover);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      transform: translateY(-1px);
     }
 
     .card-content {
@@ -775,6 +776,12 @@
         </div>
 
         <div class="form-group">
+          <label for="edit-pkg-icon-input">Package Icon <small style="color: var(--text-muted); font-weight: normal;">(Optional - Saved in your user bucket)</small></label>
+          <input type="file" id="edit-pkg-icon-input" accept="image/*" style="padding: 6px; background: var(--input-bg); color: var(--text);" />
+          <input type="hidden" id="edit-pkg-icon-url" />
+        </div>
+
+        <div class="form-group">
           <label>Installer Type <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
           <div style="display: flex; gap: 16px; margin-bottom: 10px;">
             <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
@@ -817,7 +824,7 @@
         <button class="close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="profile-card">
-        <div class="profile-avatar">
+        <div class="profile-avatar" id="profile-avatar-container">
           <i class="fa-solid fa-user-astronaut"></i>
         </div>
         <div class="profile-info">
@@ -827,6 +834,12 @@
           </div>
           <p id="profile-email">email@example.com</p>
         </div>
+      </div>
+
+      <!-- Profile Icon Upload -->
+      <div class="form-group">
+        <label for="edit-avatar-input">Profile Icon (Saved in your user bucket)</label>
+        <input type="file" id="edit-avatar-input" accept="image/*" style="padding: 6px; background: var(--input-bg); color: var(--text);" />
       </div>
 
       <!-- Account Stats -->
@@ -967,6 +980,11 @@
         </div>
 
         <div class="form-group">
+          <label for="pkg-icon-input">Package Icon <small style="color: var(--text-muted); font-weight: normal;">(Optional - Saved in your user bucket)</small></label>
+          <input type="file" id="pkg-icon-input" accept="image/*" style="padding: 6px; background: var(--input-bg); color: var(--text);" />
+        </div>
+
+        <div class="form-group">
           <label>Installer Type <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
           <div style="display: flex; gap: 16px; margin-bottom: 10px;">
             <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
@@ -1069,9 +1087,11 @@
 
       if (currentUser) {
         const username = currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer');
+        const avatarUrl = currentUserProfile?.avatar_url;
+        const avatarIconHtml = avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" style="width:20px; height:20px; border-radius:50%; object-fit:cover;" />` : `<i class="fa-solid fa-user"></i>`;
         controls.innerHTML = `
           <div class="user-pill" onclick="openProfileModal()">
-            <i class="fa-solid fa-user"></i>
+            ${avatarIconHtml}
             <span>@${escapeHtml(username)}</span>
           </div>
           <button class="btn btn-outline btn-sm" onclick="handleSignOut()">
@@ -1254,7 +1274,7 @@
     }
 
     function parsePackageMeta(rawDesc) {
-      if (!rawDesc) return { cleanDesc: '', version: 'v1.0.0', installer: '', fileUrl: '' };
+      if (!rawDesc) return { cleanDesc: '', version: 'v1.0.0', installer: '', fileUrl: '', iconUrl: '' };
       const metaMatch = rawDesc.match(/<!--META:(.*?)-->$/s);
       if (metaMatch) {
         try {
@@ -1264,20 +1284,22 @@
             cleanDesc,
             version: meta.version || 'v1.0.0',
             installer: meta.installer || '',
-            fileUrl: meta.fileUrl || ''
+            fileUrl: meta.fileUrl || '',
+            iconUrl: meta.iconUrl || ''
           };
         } catch (e) {
           // Fallback if parsing fails
         }
       }
-      return { cleanDesc: rawDesc, version: 'v1.0.0', installer: '', fileUrl: '' };
+      return { cleanDesc: rawDesc, version: 'v1.0.0', installer: '', fileUrl: '', iconUrl: '' };
     }
 
-    function serializePackageMeta(cleanDesc, version, installer, fileUrl) {
+    function serializePackageMeta(cleanDesc, version, installer, fileUrl, iconUrl) {
       const metaObj = {
         version: version || 'v1.0.0',
         installer: installer || '',
-        fileUrl: fileUrl || ''
+        fileUrl: fileUrl || '',
+        iconUrl: iconUrl || ''
       };
       return `${cleanDesc.trim()}\n\n<!--META:${JSON.stringify(metaObj)}-->`;
     }
@@ -1296,12 +1318,14 @@
       }
 
       list.innerHTML = packages.map(p => {
-        const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(p.description);
+        const { cleanDesc, version, installer, fileUrl, iconUrl } = parsePackageMeta(p.description);
         const repoLink = p.repo_url ? p.repo_url : (fileUrl ? fileUrl : '#');
+        const pkgIconHtml = iconUrl ? `<img src="${escapeHtml(iconUrl)}" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" />` : '';
         return `
         <div class="card" style="${p.isProAuthor ? 'border-color: rgba(137, 87, 229, 0.4);' : ''}">
           <div class="card-content">
             <div class="card-title-row">
+              ${pkgIconHtml}
               <h4 class="card-title">
                 <a href="javascript:void(0)" onclick="openDetailsModal('${p.id}')" style="cursor: pointer;">
                   ${escapeHtml(p.title)} <i class="fa-solid fa-circle-info" style="font-size: 0.85rem; color: var(--link);"></i>
@@ -1360,6 +1384,15 @@
       document.getElementById('profile-username').textContent = `@${username}`;
       document.getElementById('profile-email').textContent = currentUser.email || '';
 
+      const avatarContainer = document.getElementById('profile-avatar-container');
+      if (avatarContainer) {
+        if (currentUserProfile?.avatar_url) {
+          avatarContainer.innerHTML = `<img src="${escapeHtml(currentUserProfile.avatar_url)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
+        } else {
+          avatarContainer.innerHTML = `<i class="fa-solid fa-user-astronaut"></i>`;
+        }
+      }
+
       const editUsernameInput = document.getElementById('edit-username-input');
       if (editUsernameInput) {
         editUsernameInput.value = username;
@@ -1376,6 +1409,21 @@
           planBadge.style.background = 'rgba(35, 134, 54, 0.2)';
           planBadge.style.color = '#3fb950';
           planBadge.style.borderColor = 'var(--accent)';
+        }
+      }
+
+      const toggleProBtn = document.getElementById('toggle-pro-btn');
+      if (toggleProBtn) {
+        if (plan === 'pro') {
+          toggleProBtn.textContent = 'Pro Active (Permanent)';
+          toggleProBtn.disabled = true;
+          toggleProBtn.style.opacity = '0.7';
+          toggleProBtn.style.cursor = 'not-allowed';
+        } else {
+          toggleProBtn.textContent = 'Upgrade to Pro';
+          toggleProBtn.disabled = false;
+          toggleProBtn.style.opacity = '1';
+          toggleProBtn.style.cursor = 'pointer';
         }
       }
 
@@ -1431,38 +1479,65 @@
         return;
       }
 
+      let avatarUrl = currentUserProfile?.avatar_url || null;
+      const avatarInput = document.getElementById('edit-avatar-input');
+      const avatarFile = avatarInput?.files?.[0];
+
+      if (avatarFile) {
+        try {
+          avatarUrl = await uploadUserFile(avatarFile, newUsername, 'avatar');
+        } catch (err) {
+          showToast("Error uploading profile icon: " + err.message, true);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({ id: currentUser.id, username: newUsername, plan: currentUserProfile?.plan || 'free', created_at: currentUserProfile?.created_at || new Date().toISOString() })
+        .upsert({
+          id: currentUser.id,
+          username: newUsername,
+          avatar_url: avatarUrl,
+          plan: currentUserProfile?.plan || 'free',
+          created_at: currentUserProfile?.created_at || new Date().toISOString()
+        })
         .select()
         .maybeSingle();
 
       if (error) {
-        showToast("Error updating username: " + error.message, true);
+        showToast("Error updating profile: " + error.message, true);
       } else {
-        showToast("Username updated successfully!");
-        currentUserProfile = data || { username: newUsername, plan: currentUserProfile?.plan || 'free' };
+        showToast("Profile updated successfully!");
+        currentUserProfile = data || { username: newUsername, avatar_url: avatarUrl, plan: currentUserProfile?.plan || 'free' };
+        if (avatarInput) avatarInput.value = '';
         renderAuthControls();
         openProfileModal();
+        loadPackages();
       }
     }
 
     async function toggleProPlan() {
       if (!currentUser) return;
-      const newPlan = (currentUserProfile?.plan === 'pro') ? 'free' : 'pro';
+
+      if (currentUserProfile?.plan === 'pro') {
+        showToast("Pro plan subscription is permanent and cannot be downgraded.", true);
+        return;
+      }
+
       const username = currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer');
+      const avatarUrl = currentUserProfile?.avatar_url || null;
 
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({ id: currentUser.id, username, plan: newPlan, created_at: currentUserProfile?.created_at || new Date().toISOString() })
+        .upsert({ id: currentUser.id, username, avatar_url: avatarUrl, plan: 'pro', created_at: currentUserProfile?.created_at || new Date().toISOString() })
         .select()
         .maybeSingle();
 
       if (error) {
         showToast("Error updating plan: " + error.message, true);
       } else {
-        currentUserProfile = data || { username, plan: newPlan };
-        showToast(newPlan === 'pro' ? "🎉 Upgrade to Pro successful! Pro badge activated." : "Switched back to Free plan.");
+        currentUserProfile = data || { username, avatar_url: avatarUrl, plan: 'pro' };
+        showToast("🎉 Upgrade to Pro successful! Pro badge activated permanently.");
         openProfileModal();
         loadPackages();
       }
@@ -1541,9 +1616,21 @@
         }
       }
 
+      let iconUrl = "";
+      const iconInput = document.getElementById("pkg-icon-input");
+      const iconFile = iconInput?.files?.[0];
+      if (iconFile) {
+        try {
+          iconUrl = await uploadUserFile(iconFile, null, 'icon');
+        } catch (err) {
+          showToast("Error uploading package icon: " + err.message, true);
+          return;
+        }
+      }
+
       const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer')}`;
 
-      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
+      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl, iconUrl);
 
       const payload = {
         title,
@@ -1631,9 +1718,14 @@
       const pkg = cachedPackages.find(p => p.id === pkgId);
       if (!pkg) return;
 
-      const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(pkg.description);
+      const { cleanDesc, version, installer, fileUrl, iconUrl } = parsePackageMeta(pkg.description);
 
-      document.getElementById('details-title-text').textContent = pkg.title;
+      const titleTextElem = document.getElementById('details-title-text');
+      if (iconUrl) {
+        titleTextElem.innerHTML = `<img src="${escapeHtml(iconUrl)}" style="width:28px; height:28px; border-radius:6px; object-fit:cover; margin-right:8px; vertical-align:middle;" /> ${escapeHtml(pkg.title)}`;
+      } else {
+        titleTextElem.textContent = pkg.title;
+      }
       document.getElementById('details-version').textContent = version;
       document.getElementById('details-category').textContent = pkg.category || "CLI Tool";
       document.getElementById('details-desc').textContent = cleanDesc;
@@ -1688,33 +1780,54 @@
       if (fileBox) fileBox.style.display = type === 'file' ? 'block' : 'none';
     }
 
-    async function uploadInstallerFile(file) {
+    async function ensureUserBucket(username) {
+      const cleanBucketName = (username || 'developer').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+      const { data: bucket, error: getErr } = await supabase.storage.getBucket(cleanBucketName);
+      if (!bucket || getErr) {
+        const { error: createErr } = await supabase.storage.createBucket(cleanBucketName, {
+          public: true,
+          fileSizeLimit: 10485760
+        });
+        if (createErr && !createErr.message.includes('already exists')) {
+          console.warn("Could not create user bucket, falling back to 'files':", createErr.message);
+          return 'files';
+        }
+      }
+      return cleanBucketName;
+    }
+
+    async function uploadUserFile(file, username = null, customPrefix = '') {
       const MAX_SIZE = 10 * 1024 * 1024; // 10MB limit
       if (file.size > MAX_SIZE) {
         const sizeInMb = (file.size / (1024 * 1024)).toFixed(2);
         throw new Error(`File size (${sizeInMb}MB) exceeds the maximum allowed limit of 10MB.`);
       }
 
+      const user = username || (currentUserProfile?.username) || (currentUser?.email ? currentUser.email.split('@')[0] : 'developer');
+      const bucketName = await ensureUserBucket(user);
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const prefix = customPrefix ? `${customPrefix}_` : '';
+      const fileName = `${prefix}${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
       const { data, error } = await supabase.storage
-        .from('files')
-        .upload(fileName, file);
+        .from(bucketName)
+        .upload(fileName, file, { upsert: true });
 
       if (error) {
         let msg = error.message;
-        if (error.status === 400 || (msg && msg.toLowerCase().includes('bucket not found'))) {
-          msg = `${error.message}. Please ensure the 'files' bucket is created in Supabase Storage dashboard or run schema.sql.`;
-        }
         throw new Error(`Storage upload error: ${msg}`);
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('files')
+        .from(bucketName)
         .getPublicUrl(fileName);
 
       return publicUrlData.publicUrl;
+    }
+
+    async function uploadInstallerFile(file) {
+      return uploadUserFile(file, null, 'installer');
     }
 
     function openEditModal(pkgId) {
@@ -1726,7 +1839,7 @@
         return;
       }
 
-      const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(pkg.description);
+      const { cleanDesc, version, installer, fileUrl, iconUrl } = parsePackageMeta(pkg.description);
 
       document.getElementById('edit-pkg-id').value = pkg.id;
       document.getElementById('edit-title').value = pkg.title;
@@ -1737,9 +1850,14 @@
       document.getElementById('edit-pkg-installer').value = installer;
       document.getElementById('edit-pkg-file-url').value = fileUrl;
 
+      const editIconUrlElem = document.getElementById('edit-pkg-icon-url');
+      if (editIconUrlElem) editIconUrlElem.value = iconUrl;
+
       // Reset file input
       const fileInput = document.getElementById('edit-pkg-file-input');
       if (fileInput) fileInput.value = '';
+      const iconInput = document.getElementById('edit-pkg-icon-input');
+      if (iconInput) iconInput.value = '';
 
       const existingFileInfo = document.getElementById('edit-pkg-existing-file-info');
       if (fileUrl) {
@@ -1807,7 +1925,19 @@
         }
       }
 
-      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
+      let iconUrl = document.getElementById('edit-pkg-icon-url')?.value || "";
+      const iconInput = document.getElementById("edit-pkg-icon-input");
+      const iconFile = iconInput?.files?.[0];
+      if (iconFile) {
+        try {
+          iconUrl = await uploadUserFile(iconFile, null, 'icon');
+        } catch (err) {
+          showToast("Error uploading package icon: " + err.message, true);
+          return;
+        }
+      }
+
+      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl, iconUrl);
 
       const payload = {
         title,
