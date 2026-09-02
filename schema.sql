@@ -17,6 +17,7 @@ create table public.profiles (
   website_url text,
   github_url text,
   plan text default 'free' check (plan in ('free', 'pro')),
+  state text default 'user',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
