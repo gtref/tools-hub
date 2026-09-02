@@ -1,3 +1,5 @@
+[![Deploy static content to Pages](https://github.com/gtref/tools-hub/actions/workflows/static.yml/badge.svg)](https://github.com/gtref/tools-hub/actions/workflows/static.yml)
+
 # 🛠️ Linux Dev Tools Hub
 
 A modern, responsive, open-source web application for discovering and showcasing essential Linux CLI tools, system utilities, and developer productivity software.
