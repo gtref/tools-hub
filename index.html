@@ -1703,7 +1703,11 @@
         .upload(fileName, file);
 
       if (error) {
-        throw new Error(`Storage upload error: ${error.message}`);
+        let msg = error.message;
+        if (error.status === 400 || (msg && msg.toLowerCase().includes('bucket not found'))) {
+          msg = `${error.message}. Please ensure the 'files' bucket is created in Supabase Storage dashboard or run schema.sql.`;
+        }
+        throw new Error(`Storage upload error: ${msg}`);
       }
 
       const { data: publicUrlData } = supabase.storage
