@@ -2943,6 +2943,13 @@
     window.copyRepoLink = copyRepoLink;
     window.copyText = copyText;
 
+    // Check for payment cancellation URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'cancelled' || urlParams.get('payment') === 'canceled') {
+      showToast("Payment canceled.", true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     loadCurrentTabData();
   </script>
 
