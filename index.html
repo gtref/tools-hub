@@ -1005,14 +1005,15 @@
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         currentUserProfile = data;
       } else {
         const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'developer';
         currentUserProfile = {
-          username: emailPrefix
+          username: emailPrefix,
+          plan: 'free'
         };
       }
     }
@@ -1402,13 +1403,13 @@
         .from('profiles')
         .upsert({ id: currentUser.id, username: newUsername, plan: currentUserProfile?.plan || 'free', created_at: currentUserProfile?.created_at || new Date().toISOString() })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         showToast("Error updating username: " + error.message, true);
       } else {
         showToast("Username updated successfully!");
-        currentUserProfile = data;
+        currentUserProfile = data || { username: newUsername, plan: currentUserProfile?.plan || 'free' };
         renderAuthControls();
         openProfileModal();
       }
@@ -1423,12 +1424,12 @@
         .from('profiles')
         .upsert({ id: currentUser.id, username, plan: newPlan, created_at: currentUserProfile?.created_at || new Date().toISOString() })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         showToast("Error updating plan: " + error.message, true);
       } else {
-        currentUserProfile = data;
+        currentUserProfile = data || { username, plan: newPlan };
         showToast(newPlan === 'pro' ? "🎉 Upgrade to Pro successful! Pro badge activated." : "Switched back to Free plan.");
         openProfileModal();
         loadPackages();
