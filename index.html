@@ -1234,6 +1234,13 @@
         </div>
       </div>
 
+      <!-- Developer Analytics Link -->
+      <div id="developer-dashboard-link-box" style="display: none; margin-bottom: 16px;">
+        <a href="tips-dashboard.html" class="btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #238636, #1f6feb); border: none;">
+          <i class="fa-solid fa-chart-line"></i> View Developer Tips Dashboard
+        </a>
+      </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
         <button type="button" class="btn btn-danger" onclick="handleSignOut()">Sign Out</button>
@@ -2151,16 +2158,7 @@
         return;
       }
 
-      const senderId = currentUser.id;
       const targetReceiverId = developerUserId || receiverId;
-
-      // Log tip record in Supabase
-      await supabase.from('tips').insert([{
-        sender_id: senderId,
-        receiver_id: targetReceiverId,
-        amount: amount,
-        timestamp: new Date().toISOString()
-      }]);
 
       // Call Edge Function for Stripe Checkout
       const ENDPOINT = "https://bdehlwonhpafijrqsels.supabase.co/functions/v1/hyper-service";
@@ -2174,12 +2172,19 @@
 
         const data = await response.json();
         if (data && data.url) {
+          // Store pending tip details in localStorage to save only upon successful checkout completion
+          localStorage.setItem('pending_tip', JSON.stringify({
+            sender_id: currentUser.id,
+            receiver_id: targetReceiverId,
+            amount: amount,
+            timestamp: new Date().toISOString()
+          }));
           window.location.href = data.url;
         } else {
-          showToast(`🎉 $${amount.toFixed(2)} Tip recorded! Thank you for supporting developers.`);
+          showToast(`🎉 $${amount.toFixed(2)} Tip initiated! Thank you for supporting developers.`);
         }
       } catch (err) {
-        showToast(`🎉 $${amount.toFixed(2)} Tip recorded! Thank you for supporting developers.`);
+        showToast(`🎉 $${amount.toFixed(2)} Tip initiated! Thank you for supporting developers.`);
       }
     }
 
@@ -2355,6 +2360,11 @@
         avatarContainer.innerHTML = `<img src="${escapeHtml(currentUserProfile.avatar_url)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
       } else {
         avatarContainer.innerHTML = `<i class="fa-solid fa-user-astronaut"></i>`;
+      }
+
+      const devDashLinkBox = document.getElementById('developer-dashboard-link-box');
+      if (devDashLinkBox) {
+        devDashLinkBox.style.display = (username === 'ronan.nugget' || currentUser.email === 'ronan.nugget@gmail.com') ? 'block' : 'none';
       }
 
       const planBadge = document.getElementById('profile-plan-badge');
@@ -2946,9 +2956,24 @@
     // Check for payment status URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
+      const pendingTipRaw = localStorage.getItem('pending_tip');
+      if (pendingTipRaw) {
+        try {
+          const pendingTip = JSON.parse(pendingTipRaw);
+          supabase.from('tips').insert([{
+            sender_id: pendingTip.sender_id,
+            receiver_id: pendingTip.receiver_id,
+            amount: pendingTip.amount,
+            timestamp: pendingTip.timestamp || new Date().toISOString()
+          }]).then(() => localStorage.removeItem('pending_tip'));
+        } catch (e) {
+          localStorage.removeItem('pending_tip');
+        }
+      }
       showToast("🎉 Thank you! You tipped the developer.");
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (urlParams.get('payment') === 'cancelled' || urlParams.get('payment') === 'canceled') {
+      localStorage.removeItem('pending_tip');
       showToast("Payment canceled.", true);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
