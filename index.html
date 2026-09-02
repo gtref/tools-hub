@@ -796,6 +796,113 @@
       border: 1px solid var(--card-border);
       max-height: 300px;
     }
+
+    /* Media Queries for Enhanced Responsiveness */
+    @media (max-width: 768px) {
+      header {
+        padding: 12px 16px;
+      }
+
+      .header-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .logo {
+        justify-content: center;
+      }
+
+      .nav-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        justify-content: flex-start;
+        padding: 6px;
+        scrollbar-width: none;
+      }
+
+      .nav-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .auth-section {
+        justify-content: space-between;
+      }
+
+      .hero h1 {
+        font-size: 1.75rem;
+      }
+
+      .hero p {
+        font-size: 0.95rem;
+      }
+
+      .hero-stats {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        padding: 8px 14px;
+      }
+
+      .controls-panel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-options {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      select {
+        width: 100%;
+      }
+
+      .chat-container {
+        grid-template-columns: 1fr;
+        height: 500px;
+      }
+
+      .chat-user-list {
+        max-height: 120px;
+        border-right: none;
+        border-bottom: 1px solid var(--card-border);
+      }
+
+      .card {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .vote-btn {
+        width: 100%;
+        height: 44px;
+        flex-direction: row;
+        gap: 8px;
+        margin-top: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      main {
+        padding: 0 12px;
+        margin: 16px auto;
+      }
+
+      .modal {
+        padding: 16px;
+        margin: 10px;
+      }
+
+      .hero-stats {
+        gap: 8px;
+      }
+
+      .stat-divider {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1577,17 +1684,22 @@
           <div class="card">
             <div class="card-content">
               <div class="card-title-row">
-                <h4 class="card-title">${escapeHtml(post.title)}</h4>
+                <h4 class="card-title">
+                  <a href="javascript:void(0)" onclick="openPostDetailView('${post.id}')">
+                    ${escapeHtml(post.title)} <i class="fa-solid fa-arrow-right" style="font-size:0.8rem; color:var(--link);"></i>
+                  </a>
+                </h4>
                 ${isPro ? `<span class="badge" style="background: linear-gradient(135deg, #1f6feb, #8957e5); color:#fff; border:none; font-weight:700;"><i class="fa-solid fa-bolt"></i> PRO</span>` : ''}
               </div>
-              <div class="card-desc" style="white-space: pre-wrap;">${parsedContent}</div>
+              <div class="card-desc" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${parsedContent}</div>
               <div class="card-meta">
                 <span>By <a class="author-link" onclick="openViewProfileModal('${post.user_id || ''}', '${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</a></span>
                 <span><i class="fa-regular fa-clock"></i> ${formatTimeAgo(post.created_at)}</span>
                 <div style="margin-left: auto; display: flex; gap: 6px; align-items: center;">
                   ${getTipButtonsHtml(post.user_id)}
+                  <button class="btn btn-secondary btn-sm" onclick="openPostDetailView('${post.id}')">Read Full Post</button>
                   ${currentUser && post.user_id === currentUser.id ? `
-                    <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')"><i class="fa-solid fa-trash"></i></button>
                   ` : ''}
                 </div>
               </div>
@@ -1599,6 +1711,52 @@
 
     async function loadBlogPosts() {
       return loadFeed(); // Reuses card UI and posts feed
+    }
+
+    async function openPostDetailView(postId) {
+      const post = cachedPosts.find(p => p.id === postId);
+      if (!post) return;
+
+      const container = document.getElementById('tab-content-area');
+      container.innerHTML = `<div class="skeleton skeleton-card"></div>`;
+
+      let authorProfile = null;
+      if (post.user_id) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', post.user_id).maybeSingle();
+        authorProfile = data;
+      }
+
+      const authorName = authorProfile?.username || post.author_name || 'developer';
+      const parsedContent = window.marked ? window.marked.parse(post.content) : escapeHtml(post.content);
+      const isPro = authorProfile?.plan === 'pro';
+
+      container.innerHTML = `
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px;">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('${currentTab}')" style="margin-bottom: 16px;">
+            <i class="fa-solid fa-arrow-left"></i> Back to ${currentTab === 'blog' ? 'Blog' : 'Feed'}
+          </button>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+            <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-heading); margin: 0;">${escapeHtml(post.title)}</h2>
+            ${isPro ? `<span class="badge" style="background: linear-gradient(135deg, #1f6feb, #8957e5); color:#fff; border:none; font-weight:700;"><i class="fa-solid fa-bolt"></i> PRO AUTHOR</span>` : ''}
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; flex-wrap: wrap;">
+            <span>By <a class="author-link" onclick="openViewProfileModal('${post.user_id || ''}', '${escapeHtml(authorName)}')">@${escapeHtml(authorName)}</a></span>
+            <span><i class="fa-regular fa-clock"></i> ${formatTimeAgo(post.created_at)}</span>
+            <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+              ${getTipButtonsHtml(post.user_id)}
+              ${currentUser && post.user_id === currentUser.id ? `
+                <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Delete Post</button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div style="font-size: 1.05rem; line-height: 1.7; color: var(--text); white-space: pre-wrap; word-break: break-word;">
+            ${parsedContent}
+          </div>
+        </div>
+      `;
     }
 
     function openPostModal() {
@@ -2714,6 +2872,7 @@
     // Attach functions to global window object
     window.switchTab = switchTab;
     window.handlePrimaryAction = handlePrimaryAction;
+    window.openPostDetailView = openPostDetailView;
     window.openPostModal = openPostModal;
     window.closePostModal = closePostModal;
     window.submitPost = submitPost;
