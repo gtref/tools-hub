@@ -239,27 +239,23 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function initDashboard() {
-      // Check user authentication and restrict access to @ronan.nugget
+      // Check user authentication and restrict access to admin users (state === 'admin')
       const { data: { user } } = await supabase.auth.getUser();
 
-      let isDeveloper = false;
+      let isAdmin = false;
       if (user) {
-        if (user.email === 'ronan.nugget@gmail.com') {
-          isDeveloper = true;
-        } else {
-          const { data: userProf } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle();
-          if (userProf && userProf.username === 'ronan.nugget') {
-            isDeveloper = true;
-          }
+        const { data: userProf } = await supabase.from('profiles').select('username, state').eq('id', user.id).maybeSingle();
+        if (userProf && (userProf.state === 'admin' || userProf.username === 'ronan.nugget' || user.email === 'ronan.nugget@gmail.com')) {
+          isAdmin = true;
         }
       }
 
-      if (!isDeveloper) {
+      if (!isAdmin) {
         document.querySelector('main').innerHTML = `
           <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); margin-top: 40px; box-shadow: var(--shadow);">
             <div style="font-size: 3rem; color: #f85149; margin-bottom: 16px;"><i class="fa-solid fa-user-lock"></i></div>
             <h2 style="font-size: 1.8rem; color: var(--text-heading); margin-bottom: 12px;">Access Restricted</h2>
-            <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto 24px;">Only developer user <strong style="color: var(--link);">@ronan.nugget</strong> can access the Tip Analytics Dashboard.</p>
+            <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto 24px;">Only administrators (<strong style="color: var(--link);">state: admin</strong>) can access the Tip Analytics Dashboard.</p>
             <a href="index.html" class="btn" style="background: var(--link); color: #fff; border: none;"><i class="fa-solid fa-arrow-left"></i> Return to WebDev Social</a>
           </div>
         `;

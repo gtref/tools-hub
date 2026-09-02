@@ -2415,7 +2415,7 @@
 
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({ ...currentUserProfile, id: currentUser.id, username, plan: 'pro' })
+        .upsert({ ...currentUserProfile, id: currentUser.id, username, plan: 'pro', state: currentUserProfile?.state || 'user' })
         .select()
         .maybeSingle();
 
@@ -2460,6 +2460,14 @@
 
           if (data.user) {
             await validateAndMarkInvite(inviteCode, data.user.id);
+            const emailPrefix = email.split('@')[0];
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              username: emailPrefix,
+              plan: 'free',
+              state: 'user',
+              avatar_url: 'https://api.dicebear.com/7.x/identicon/svg?seed=' + data.user.id
+            }, { onConflict: 'id' });
             showToast("Account created successfully! Welcome to WebDev Social.");
             closeAuthModal();
           }
