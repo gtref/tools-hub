@@ -1477,6 +1477,14 @@
     let activeChatSubscription = null;
     let currentViewProfileTab = 'posts';
     let activeViewingProfile = null;
+    let developerUserId = null;
+
+    async function fetchDeveloperUserId() {
+      const { data } = await supabase.from('profiles').select('id, username').eq('username', 'ronan.nugget').maybeSingle();
+      if (data) {
+        developerUserId = data.id;
+      }
+    }
 
     // Status page embed test initialization call
     if (typeof window.statusEmbedTest === 'function') {
@@ -1491,6 +1499,7 @@
       } else {
         currentUserProfile = null;
       }
+      await fetchDeveloperUserId();
       renderAuthControls();
       loadCurrentTabData();
     });
@@ -2091,7 +2100,7 @@
     // ------------------------------------
     // 4. INVITE-ONLY ACCESS SYSTEM
     // ------------------------------------
-    async function validateAndMarkInvite(inviteCode, userId) {
+    async function validateAndMarkInvite(inviteCode, userId = null) {
       if (!inviteCode) return { success: false, message: "An invite code is required for sign up." };
 
       const { data: invite, error } = await supabase
@@ -2108,11 +2117,13 @@
         return { success: false, message: "This invite code has already been used." };
       }
 
-      // Mark invite code as used
-      await supabase.from('invites').update({
-        is_used: true,
-        used_by: userId
-      }).eq('id', invite.id);
+      // Mark invite code as used only if userId is provided
+      if (userId) {
+        await supabase.from('invites').update({
+          is_used: true,
+          used_by: userId
+        }).eq('id', invite.id);
+      }
 
       return { success: true };
     }
@@ -2121,11 +2132,12 @@
     // 5. MICRO-TIP BUTTONS ($1.00 & $0.50 via Stripe Checkout)
     // ------------------------------------
     function getTipButtonsHtml(receiverId) {
-      if (!receiverId || (currentUser && receiverId === currentUser.id)) return '';
+      const targetReceiverId = developerUserId || receiverId;
+      if (!targetReceiverId || (currentUser && currentUser.id === targetReceiverId)) return '';
       return `
         <div style="display:inline-flex; gap: 4px;">
-          <button class="btn-tip" onclick="processTip('${receiverId}', 0.50)" title="Send $0.50 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 0.50</button>
-          <button class="btn-tip" onclick="processTip('${receiverId}', 1.00)" title="Send $1.00 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 1.00</button>
+          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 0.50)" title="Send $0.50 Stripe tip to developer"><i class="fa-solid fa-dollar-sign"></i> 0.50</button>
+          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 1.00)" title="Send $1.00 Stripe tip to developer"><i class="fa-solid fa-dollar-sign"></i> 1.00</button>
         </div>
       `;
     }
@@ -2138,11 +2150,12 @@
       }
 
       const senderId = currentUser.id;
+      const targetReceiverId = developerUserId || receiverId;
 
       // Insert tip record into Supabase
       const { error } = await supabase.from('tips').insert([{
         sender_id: senderId,
-        receiver_id: receiverId,
+        receiver_id: targetReceiverId,
         amount: amount,
         timestamp: new Date().toISOString()
       }]);
@@ -2150,7 +2163,7 @@
       if (error) {
         showToast("Tip recorded error: " + error.message, true);
       } else {
-        showToast(`🎉 $${amount.toFixed(2)} Tip sent via Stripe Checkout! Thank you for supporting developers.`);
+        showToast(`🎉 $${amount.toFixed(2)} Tip sent via Stripe Checkout! Thank you for supporting the developer.`);
       }
     }
 
