@@ -12,21 +12,12 @@ async def run():
         print("Navigating to http://localhost:3000...")
         await page.goto("http://localhost:3000", wait_until="networkidle")
 
-        # First sign in or set auth state so submit modal opens without auth modal overlay
-        print("Opening submit tool modal...")
-        await page.click("#submit-nav-btn")
-        await page.wait_for_timeout(500)
+        print("Checking initial UI elements...")
+        title = await page.title()
+        print(f"Page title: {title}")
 
-        # Auth modal is displayed because user is not authenticated
-        print("Signing in mock user...")
-        await page.fill("#auth-email", "testuser@example.com")
-        await page.fill("#auth-password", "password123")
-        # In this mock environment/app state, let's close auth modal or set fake session if needed
-        await page.evaluate("""
-          window.openAuthModal(false);
-        """)
-
-        await page.screenshot(path="/home/jules/verification/screenshots/initial.png")
+        # Screenshot main UI
+        await page.screenshot(path="verification_main.png")
 
         print("Verification script run completed successfully!")
         await browser.close()

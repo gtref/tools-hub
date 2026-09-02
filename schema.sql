@@ -99,20 +99,29 @@ create index idx_upvotes_package_id on public.upvotes(package_id);
 create index idx_upvotes_user_id on public.upvotes(user_id);
 
 -- 11. Supabase Storage Bucket & RLS Policies for Files (10MB Max Size)
+-- 11. Supabase Storage Bucket & RLS Policies for Files & User Buckets (10MB Max Size)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('files', 'files', true, 10485760, null)
 on conflict (id) do update set
   public = true,
   file_size_limit = 10485760;
 
+-- Bucket level policies
+create policy "Anyone can read storage buckets" on storage.buckets
+  for select using (true);
+
+create policy "Authenticated users can create storage buckets" on storage.buckets
+  for insert with check (auth.role() = 'authenticated');
+
+-- Object level policies
 create policy "Anyone can read storage files" on storage.objects
-  for select using (bucket_id = 'files');
+  for select using (true);
 
 create policy "Anyone can upload storage files" on storage.objects
-  for insert with check (bucket_id = 'files');
+  for insert with check (true);
 
 create policy "Anyone can update storage files" on storage.objects
-  for update using (bucket_id = 'files');
+  for update using (true);
 
 create policy "Anyone can delete storage files" on storage.objects
-  for delete using (bucket_id = 'files');
+  for delete using (true);
