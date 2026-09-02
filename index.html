@@ -688,6 +688,7 @@
           <option value="ALL">All Packages</option>
           <option value="MINE">My Submissions</option>
           <option value="UPVOTED">My Upvoted</option>
+          <option value="PRO">⚡ Pro Featured Tools</option>
         </select>
 
         <select id="sort-filter" onchange="loadPackages()">
@@ -727,6 +728,65 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="toggleAuthMode()" id="auth-toggle-btn">Need an account? Sign Up</button>
           <button type="submit" class="btn" id="auth-submit-btn">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Package Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>Update Published Tool</h3>
+        <button class="close-btn" onclick="closeEditModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="edit-pkg-form" onsubmit="updatePackage(event)">
+        <input type="hidden" id="edit-pkg-id" />
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="edit-title">Tool Name *</label>
+            <input type="text" id="edit-title" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-pkg-version">Version</label>
+            <input type="text" id="edit-pkg-version" placeholder="e.g. v1.1.0" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-category">Category</label>
+          <select id="edit-category">
+            <option value="CLI Tool">CLI Tool</option>
+            <option value="System Monitor">System Monitor</option>
+            <option value="Dev Utilities">Dev Utilities</option>
+            <option value="Networking">Networking</option>
+            <option value="Security">Security</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-desc">Short Description *</label>
+          <textarea id="edit-desc" rows="2" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-url">Repository URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="url" id="edit-url" placeholder="https://github.com/user/repo" />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-pkg-installer">One-Liner Install Command <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="text" id="edit-pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-pkg-file-url">Direct Installer File URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="url" id="edit-pkg-file-url" placeholder="https://example.com/downloads/tool-v1.1.0.tar.gz" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn">Save Changes</button>
         </div>
       </form>
     </div>
@@ -777,6 +837,19 @@
         </div>
       </div>
 
+      <!-- Pro Subscription Plan Toggle -->
+      <div style="background: linear-gradient(135deg, rgba(31, 111, 235, 0.1), rgba(137, 87, 229, 0.1)); border: 1px solid rgba(137, 87, 229, 0.3); border-radius: var(--radius); padding: 14px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <strong style="color: var(--text-heading); font-size: 0.95rem;"><i class="fa-solid fa-crown" style="color: #f1e05a;"></i> Linux Hub Pro Tier</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Get Pro badge on your published tools & unlock analytics.</p>
+          </div>
+          <button type="button" id="toggle-pro-btn" class="btn btn-sm" onclick="toggleProPlan()" style="background: linear-gradient(135deg, #1f6feb, #8957e5); border: none;">
+            Switch Plan
+          </button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Your Submissions</label>
         <div id="user-submissions-list" style="max-height: 150px; overflow-y: auto; background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px;">
@@ -792,30 +865,45 @@
 
   <!-- Package Details Modal -->
   <div class="modal-overlay" id="details-modal">
-    <div class="modal">
+    <div class="modal" style="max-width: 560px;">
       <div class="modal-header">
         <h3 id="details-title" style="display: flex; align-items: center; gap: 8px;">
           <span id="details-title-text">Package Details</span>
         </h3>
         <button class="close-btn" onclick="closeDetailsModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div style="margin-bottom: 16px;">
+      <div style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
+        <span id="details-version" class="badge" style="background: rgba(88, 166, 255, 0.15); color: var(--link); border-color: rgba(88, 166, 255, 0.3); font-size: 0.85rem; padding: 4px 10px; font-weight: 700;">v1.0.0</span>
         <span id="details-category" class="badge" style="font-size: 0.85rem; padding: 4px 10px;">CLI Tool</span>
       </div>
       <div class="form-group">
         <label>Description</label>
         <p id="details-desc" style="background: var(--bg); padding: 12px; border-radius: var(--radius); border: 1px solid var(--card-border); color: var(--text-heading); font-size: 0.95rem; white-space: pre-wrap; word-break: break-word;"></p>
       </div>
+
+      <div id="details-installer-box" class="form-group" style="display: none;">
+        <label><i class="fa-solid fa-terminal" style="color: #3fb950;"></i> Installation Command</label>
+        <div style="background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px; font-family: monospace; font-size: 0.85rem; color: #3fb950; display: flex; justify-content: space-between; align-items: center;">
+          <code id="details-installer-cmd" style="word-break: break-all;"></code>
+          <button class="btn btn-outline btn-sm" id="details-installer-copy-btn" style="margin-left: 8px;">Copy</button>
+        </div>
+      </div>
+
       <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
         <div><i class="fa-solid fa-user"></i> Submitted by: <strong id="details-author" style="color: var(--text-heading);"></strong></div>
         <div><i class="fa-regular fa-clock"></i> Submitted: <span id="details-time"></span></div>
         <div><i class="fa-solid fa-caret-up" style="color: var(--accent-hover);"></i> Upvotes: <strong id="details-upvotes" style="color: var(--text-heading);"></strong></div>
       </div>
       <div class="modal-footer" style="justify-content: space-between; align-items: center;">
-        <button type="button" class="btn btn-outline btn-sm" id="details-copy-btn"><i class="fa-regular fa-copy"></i> Copy Link</button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline btn-sm" id="details-copy-btn"><i class="fa-regular fa-copy"></i> Copy Link</button>
+          <a id="details-file-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="display: none; text-decoration: none; color: var(--text-heading);">
+            <i class="fa-solid fa-download" style="color: var(--accent-hover);"></i> Download File
+          </a>
+        </div>
         <div style="display: flex; gap: 10px;">
           <button type="button" class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
-          <a id="details-repo-link" href="#" target="_blank" rel="noopener noreferrer" class="btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Repository</a>
+          <a id="details-repo-link" href="#" target="_blank" rel="noopener noreferrer" class="btn" style="display: inline-flex;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Repository</a>
         </div>
       </div>
     </div>
@@ -823,16 +911,23 @@
 
   <!-- Submit Package Modal -->
   <div class="modal-overlay" id="submit-modal">
-    <div class="modal">
+    <div class="modal" style="max-width: 580px;">
       <div class="modal-header">
         <h3>Submit a Package / Utility</h3>
         <button class="close-btn" onclick="closeSubmitModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <form id="pkg-form" onsubmit="submitPackage(event)">
-        <div class="form-group">
-          <label for="title">Tool Name</label>
-          <input type="text" id="title" placeholder="e.g. custom-uname" required />
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="title">Tool Name *</label>
+            <input type="text" id="title" placeholder="e.g. custom-uname" required />
+          </div>
+          <div class="form-group">
+            <label for="pkg-version">Version</label>
+            <input type="text" id="pkg-version" placeholder="e.g. v1.0.0" defaultValue="v1.0.0" />
+          </div>
         </div>
+
         <div class="form-group">
           <label for="category">Category</label>
           <select id="category">
@@ -843,18 +938,32 @@
             <option value="Security">Security</option>
           </select>
         </div>
+
         <div class="form-group">
-          <label for="desc">Short Description</label>
+          <label for="desc">Short Description *</label>
           <textarea id="desc" rows="2" placeholder="Brief summary of what this tool does..." required></textarea>
         </div>
+
         <div class="form-group">
-          <label for="url">Repository / Package URL</label>
-          <input type="url" id="url" placeholder="https://github.com/user/repo" required />
+          <label for="url">Repository URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="url" id="url" placeholder="https://github.com/user/repo (leave blank if none)" />
         </div>
+
+        <div class="form-group">
+          <label for="pkg-installer">One-Liner Install Command <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="text" id="pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
+        </div>
+
+        <div class="form-group">
+          <label for="pkg-file-url">Direct Installer File URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <input type="url" id="pkg-file-url" placeholder="https://example.com/downloads/tool-v1.0.0.tar.gz" />
+        </div>
+
         <div class="form-group">
           <label for="author">Your Name / Handle</label>
           <input type="text" id="author" placeholder="e.g. @octocat" required />
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeSubmitModal()">Cancel</button>
           <button type="submit" class="btn">Submit Tool</button>
@@ -896,14 +1005,15 @@
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         currentUserProfile = data;
       } else {
         const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'developer';
         currentUserProfile = {
-          username: emailPrefix
+          username: emailPrefix,
+          plan: 'free'
         };
       }
     }
@@ -1054,13 +1164,21 @@
         return;
       }
 
+      // Fetch profiles to determine user plan tier
+      const { data: profiles } = await supabase.from("profiles").select("id, plan, username");
+      const profileMap = new Map((profiles || []).map(pr => [pr.id, pr]));
+
       let processed = (pkgs || []).map(p => {
         const upvoteList = p.upvotes || [];
         const userHasVoted = currentUser ? upvoteList.some(u => u.user_id === currentUser.id) : false;
+        const authorProfile = p.user_id ? profileMap.get(p.user_id) : null;
+        const isProAuthor = authorProfile?.plan === 'pro';
+
         return {
           ...p,
           upvote_count: upvoteList.length,
-          voted: userHasVoted
+          voted: userHasVoted,
+          isProAuthor
         };
       });
 
@@ -1077,6 +1195,8 @@
         processed = processed.filter(p => p.user_id === currentUser.id);
       } else if (userFilter === "UPVOTED" && currentUser) {
         processed = processed.filter(p => p.voted);
+      } else if (userFilter === "PRO") {
+        processed = processed.filter(p => p.isProAuthor);
       } else if ((userFilter === "MINE" || userFilter === "UPVOTED") && !currentUser) {
         processed = [];
       }
@@ -1101,6 +1221,35 @@
       renderPackageList(filtered);
     }
 
+    function parsePackageMeta(rawDesc) {
+      if (!rawDesc) return { cleanDesc: '', version: 'v1.0.0', installer: '', fileUrl: '' };
+      const metaMatch = rawDesc.match(/<!--META:(.*?)-->$/s);
+      if (metaMatch) {
+        try {
+          const meta = JSON.parse(metaMatch[1]);
+          const cleanDesc = rawDesc.replace(/<!--META:.*?-->$/s, '').trim();
+          return {
+            cleanDesc,
+            version: meta.version || 'v1.0.0',
+            installer: meta.installer || '',
+            fileUrl: meta.fileUrl || ''
+          };
+        } catch (e) {
+          // Fallback if parsing fails
+        }
+      }
+      return { cleanDesc: rawDesc, version: 'v1.0.0', installer: '', fileUrl: '' };
+    }
+
+    function serializePackageMeta(cleanDesc, version, installer, fileUrl) {
+      const metaObj = {
+        version: version || 'v1.0.0',
+        installer: installer || '',
+        fileUrl: fileUrl || ''
+      };
+      return `${cleanDesc.trim()}\n\n<!--META:${JSON.stringify(metaObj)}-->`;
+    }
+
     function renderPackageList(packages) {
       const list = document.getElementById("package-list");
 
@@ -1114,8 +1263,11 @@
         return;
       }
 
-      list.innerHTML = packages.map(p => `
-        <div class="card">
+      list.innerHTML = packages.map(p => {
+        const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(p.description);
+        const repoLink = p.repo_url ? p.repo_url : (fileUrl ? fileUrl : '#');
+        return `
+        <div class="card" style="${p.isProAuthor ? 'border-color: rgba(137, 87, 229, 0.4);' : ''}">
           <div class="card-content">
             <div class="card-title-row">
               <h4 class="card-title">
@@ -1123,19 +1275,39 @@
                   ${escapeHtml(p.title)} <i class="fa-solid fa-circle-info" style="font-size: 0.85rem; color: var(--link);"></i>
                 </a>
               </h4>
+              <span class="badge" style="background: rgba(88, 166, 255, 0.15); color: var(--link); border-color: rgba(88, 166, 255, 0.3); font-weight: 700;">${escapeHtml(version)}</span>
               <span class="badge">${escapeHtml(p.category || "CLI Tool")}</span>
+              ${p.isProAuthor ? `<span class="badge" style="background: linear-gradient(135deg, #1f6feb, #8957e5); color: #fff; border: none; font-weight: 700;"><i class="fa-solid fa-bolt" style="margin-right:2px;"></i> PRO</span>` : ''}
             </div>
-            <p class="card-desc">${escapeHtml(p.description)}</p>
+            <p class="card-desc">${escapeHtml(cleanDesc)}</p>
+            ${installer ? `
+              <div style="background: var(--bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 6px 12px; margin-bottom: 10px; font-family: monospace; font-size: 0.8rem; color: #3fb950; display: flex; align-items: center; justify-content: space-between;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><i class="fa-solid fa-terminal" style="color: var(--text-muted); margin-right: 6px;"></i>${escapeHtml(installer)}</span>
+                <button class="btn btn-outline btn-sm" onclick="copyText('${escapeHtml(installer)}')" style="padding: 1px 6px; font-size: 0.7rem; margin-left: 8px;">Copy</button>
+              </div>
+            ` : ''}
             <div class="card-meta">
               <span><i class="fa-solid fa-user"></i> ${escapeHtml(p.submitted_by || "anonymous")}</span>
               <span><i class="fa-regular fa-clock"></i> ${formatTimeAgo(p.created_at)}</span>
-              <button class="btn btn-outline btn-sm" onclick="copyRepoLink('${escapeHtml(p.repo_url)}')" title="Copy URL" style="padding: 2px 8px; margin-left: 8px;">
-                <i class="fa-regular fa-copy"></i> Copy Link
-              </button>
-              ${currentUser && p.user_id === currentUser.id ? `
-                <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')" title="Delete package" style="padding: 2px 8px; margin-left: auto;">
-                  <i class="fa-solid fa-trash"></i> Delete
+              ${p.repo_url ? `
+                <button class="btn btn-outline btn-sm" onclick="copyRepoLink('${escapeHtml(p.repo_url)}')" title="Copy Repo URL" style="padding: 2px 8px;">
+                  <i class="fa-regular fa-copy"></i> Repo Link
                 </button>
+              ` : ''}
+              ${fileUrl ? `
+                <a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="padding: 2px 8px; text-decoration: none; color: var(--text-heading);">
+                  <i class="fa-solid fa-download" style="color: var(--accent-hover);"></i> Download File
+                </a>
+              ` : ''}
+              ${currentUser && p.user_id === currentUser.id ? `
+                <div style="margin-left: auto; display: flex; gap: 6px;">
+                  <button class="btn btn-secondary btn-sm" onclick="openEditModal('${p.id}')" title="Edit package" style="padding: 2px 8px;">
+                    <i class="fa-solid fa-pen"></i> Edit
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')" title="Delete package" style="padding: 2px 8px;">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
               ` : ''}
             </div>
           </div>
@@ -1144,7 +1316,8 @@
             <span>${p.upvote_count}</span>
           </button>
         </div>
-      `).join("");
+      `;
+      }).join("");
     }
 
     async function openProfileModal() {
@@ -1228,17 +1401,38 @@
 
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({ id: currentUser.id, username: newUsername, created_at: currentUserProfile?.created_at || new Date().toISOString() })
+        .upsert({ id: currentUser.id, username: newUsername, plan: currentUserProfile?.plan || 'free', created_at: currentUserProfile?.created_at || new Date().toISOString() })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         showToast("Error updating username: " + error.message, true);
       } else {
         showToast("Username updated successfully!");
-        currentUserProfile = data;
+        currentUserProfile = data || { username: newUsername, plan: currentUserProfile?.plan || 'free' };
         renderAuthControls();
         openProfileModal();
+      }
+    }
+
+    async function toggleProPlan() {
+      if (!currentUser) return;
+      const newPlan = (currentUserProfile?.plan === 'pro') ? 'free' : 'pro';
+      const username = currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({ id: currentUser.id, username, plan: newPlan, created_at: currentUserProfile?.created_at || new Date().toISOString() })
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        showToast("Error updating plan: " + error.message, true);
+      } else {
+        currentUserProfile = data || { username, plan: newPlan };
+        showToast(newPlan === 'pro' ? "🎉 Upgrade to Pro successful! Pro badge activated." : "Switched back to Free plan.");
+        openProfileModal();
+        loadPackages();
       }
     }
 
@@ -1271,6 +1465,15 @@
       }
     }
 
+    function copyText(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Command copied to clipboard!");
+      }).catch(() => {
+        showToast("Failed to copy command.", true);
+      });
+    }
+
     async function submitPackage(e) {
       e.preventDefault();
 
@@ -1282,15 +1485,20 @@
       }
 
       const title = document.getElementById("title").value.trim();
+      const version = document.getElementById("pkg-version").value.trim() || "v1.0.0";
       const category = document.getElementById("category").value;
-      const description = document.getElementById("desc").value.trim();
-      const repo_url = document.getElementById("url").value.trim();
+      const cleanDesc = document.getElementById("desc").value.trim();
+      const repo_url = document.getElementById("url").value.trim() || "";
+      const installer = document.getElementById("pkg-installer").value.trim();
+      const fileUrl = document.getElementById("pkg-file-url").value.trim();
       const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer')}`;
+
+      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
 
       const payload = {
         title,
         category,
-        description,
+        description: fullDescription,
         repo_url,
         submitted_by,
         user_id: currentUser.id
@@ -1373,24 +1581,118 @@
       const pkg = cachedPackages.find(p => p.id === pkgId);
       if (!pkg) return;
 
+      const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(pkg.description);
+
       document.getElementById('details-title-text').textContent = pkg.title;
+      document.getElementById('details-version').textContent = version;
       document.getElementById('details-category').textContent = pkg.category || "CLI Tool";
-      document.getElementById('details-desc').textContent = pkg.description;
+      document.getElementById('details-desc').textContent = cleanDesc;
       document.getElementById('details-author').textContent = pkg.submitted_by || "anonymous";
       document.getElementById('details-time').textContent = formatTimeAgo(pkg.created_at);
       document.getElementById('details-upvotes').textContent = pkg.upvote_count;
 
+      const installerBox = document.getElementById('details-installer-box');
+      const installerCmd = document.getElementById('details-installer-cmd');
+      const installerCopyBtn = document.getElementById('details-installer-copy-btn');
+
+      if (installer) {
+        installerBox.style.display = 'block';
+        installerCmd.textContent = installer;
+        installerCopyBtn.onclick = () => copyText(installer);
+      } else {
+        installerBox.style.display = 'none';
+      }
+
+      const fileLink = document.getElementById('details-file-link');
+      if (fileUrl) {
+        fileLink.style.display = 'inline-flex';
+        fileLink.href = fileUrl;
+      } else {
+        fileLink.style.display = 'none';
+      }
+
       const repoLink = document.getElementById('details-repo-link');
-      repoLink.href = pkg.repo_url;
+      if (pkg.repo_url) {
+        repoLink.style.display = 'inline-flex';
+        repoLink.href = pkg.repo_url;
+      } else {
+        repoLink.style.display = 'none';
+      }
 
       const copyBtn = document.getElementById('details-copy-btn');
-      copyBtn.onclick = () => copyRepoLink(pkg.repo_url);
+      copyBtn.onclick = () => copyRepoLink(pkg.repo_url || window.location.href);
 
       document.getElementById('details-modal').classList.add('active');
     }
 
     function closeDetailsModal() {
       document.getElementById('details-modal').classList.remove('active');
+    }
+
+    function openEditModal(pkgId) {
+      const pkg = cachedPackages.find(p => p.id === pkgId);
+      if (!pkg) return;
+
+      if (!currentUser || pkg.user_id !== currentUser.id) {
+        showToast("You can only edit packages that you published.", true);
+        return;
+      }
+
+      const { cleanDesc, version, installer, fileUrl } = parsePackageMeta(pkg.description);
+
+      document.getElementById('edit-pkg-id').value = pkg.id;
+      document.getElementById('edit-title').value = pkg.title;
+      document.getElementById('edit-pkg-version').value = version;
+      document.getElementById('edit-category').value = pkg.category || "CLI Tool";
+      document.getElementById('edit-desc').value = cleanDesc;
+      document.getElementById('edit-url').value = pkg.repo_url || "";
+      document.getElementById('edit-pkg-installer').value = installer;
+      document.getElementById('edit-pkg-file-url').value = fileUrl;
+
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+
+    async function updatePackage(e) {
+      e.preventDefault();
+
+      if (!currentUser) {
+        showToast("You must be logged in.", true);
+        closeEditModal();
+        openAuthModal(false);
+        return;
+      }
+
+      const pkgId = document.getElementById('edit-pkg-id').value;
+      const title = document.getElementById("edit-title").value.trim();
+      const version = document.getElementById("edit-pkg-version").value.trim() || "v1.0.0";
+      const category = document.getElementById("edit-category").value;
+      const cleanDesc = document.getElementById("edit-desc").value.trim();
+      const repo_url = document.getElementById("edit-url").value.trim() || "";
+      const installer = document.getElementById("edit-pkg-installer").value.trim();
+      const fileUrl = document.getElementById("edit-pkg-file-url").value.trim();
+
+      const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
+
+      const payload = {
+        title,
+        category,
+        description: fullDescription,
+        repo_url
+      };
+
+      const { error } = await supabase.from("packages").update(payload).eq("id", pkgId).eq("user_id", currentUser.id);
+
+      if (error) {
+        showToast("Error updating package: " + error.message, true);
+      } else {
+        showToast("Package updated successfully!");
+        closeEditModal();
+        loadPackages();
+      }
     }
 
     function openSubmitModal() {
@@ -1437,12 +1739,17 @@
     window.handleSignOut = handleSignOut;
     window.openSubmitModal = openSubmitModal;
     window.closeSubmitModal = closeSubmitModal;
+    window.openEditModal = openEditModal;
+    window.closeEditModal = closeEditModal;
+    window.updatePackage = updatePackage;
     window.openDetailsModal = openDetailsModal;
     window.closeDetailsModal = closeDetailsModal;
     window.openProfileModal = openProfileModal;
     window.closeProfileModal = closeProfileModal;
     window.saveUsername = saveUsername;
+    window.toggleProPlan = toggleProPlan;
     window.copyRepoLink = copyRepoLink;
+    window.copyText = copyText;
     window.submitPackage = submitPackage;
     window.deletePackage = deletePackage;
     window.upvote = upvote;
