@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful - WebDev Social</title>
+  <script>
+    // Preserve session_id if present and redirect to main app with payment=success
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id') || '';
+    const targetUrl = "index.html?payment=success" + (sessionId ? "&session_id=" + encodeURIComponent(sessionId) : "");
+    window.location.href = targetUrl;
+  </script>
+</head>
+<body>
+  <p>Payment successful! Redirecting back to WebDev Social...</p>
+</body>
+</html>
