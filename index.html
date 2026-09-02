@@ -13,7 +13,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-  <script src="https://js.stripe.com/v3/"></script>
   <style>
     :root {
       --bg: #0d1117;
@@ -1466,8 +1465,6 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const STRIPE_PUBLISHABLE_KEY = "pk_test_51QtaV3DFdYwpQKeo83z7DNI2cL7H1IHPMeED5ILT5ZxAJriY5xMyETgWO4eIZrPn2c2U4B1v0rNsz1TFW0sk7jrc00owvkLvCz";
-    const stripe = window.Stripe ? window.Stripe(STRIPE_PUBLISHABLE_KEY) : null;
 
     let currentUser = null;
     let currentUserProfile = null;
@@ -2140,14 +2137,14 @@
       if (!targetReceiverId || (currentUser && currentUser.id === targetReceiverId)) return '';
       return `
         <div style="display:inline-flex; gap: 4px;">
-          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 0.50)" title="Send $0.50 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 0.50</button>
-          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 1.00)" title="Send $1.00 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 1.00</button>
-          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 2.00)" title="Send $2.00 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 2.00</button>
+          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 0.50, 'small')" title="Send $0.50 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 0.50</button>
+          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 1.00, 'small')" title="Send $1.00 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 1.00</button>
+          <button class="btn-tip" onclick="processTip('${targetReceiverId}', 2.00, 'large')" title="Send $2.00 Stripe tip"><i class="fa-solid fa-dollar-sign"></i> 2.00</button>
         </div>
       `;
     }
 
-    async function processTip(receiverId, amount) {
+    async function processTip(receiverId, amount, tipType = 'small') {
       if (!currentUser) {
         showToast("Please sign in to send micro-tips.", true);
         openAuthModal(false);
@@ -2157,18 +2154,32 @@
       const senderId = currentUser.id;
       const targetReceiverId = developerUserId || receiverId;
 
-      // Insert tip record into Supabase
-      const { error } = await supabase.from('tips').insert([{
+      // Log tip record in Supabase
+      await supabase.from('tips').insert([{
         sender_id: senderId,
         receiver_id: targetReceiverId,
         amount: amount,
         timestamp: new Date().toISOString()
       }]);
 
-      if (error) {
-        showToast("Tip recorded error: " + error.message, true);
-      } else {
-        showToast(`🎉 $${amount.toFixed(2)} Tip sent via Stripe Checkout! Thank you for supporting the developer.`);
+      // Call Edge Function for Stripe Checkout
+      const ENDPOINT = "https://bdehlwonhpafijrqsels.supabase.co/functions/v1/hyper-service";
+
+      try {
+        const response = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tip: tipType === 'large' || amount >= 2.0 ? 'large' : 'small' })
+        });
+
+        const data = await response.json();
+        if (data && data.url) {
+          window.location.href = data.url;
+        } else {
+          showToast(`🎉 $${amount.toFixed(2)} Tip recorded! Thank you for supporting developers.`);
+        }
+      } catch (err) {
+        showToast(`🎉 $${amount.toFixed(2)} Tip recorded! Thank you for supporting developers.`);
       }
     }
 
