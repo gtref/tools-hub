@@ -775,13 +775,30 @@
         </div>
 
         <div class="form-group">
-          <label for="edit-pkg-installer">One-Liner Install Command <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
-          <input type="text" id="edit-pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
-        </div>
+          <label>Installer Type <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <div style="display: flex; gap: 16px; margin-bottom: 10px;">
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="edit-installer-type" value="none" checked onchange="toggleInstallerType('edit')" /> None
+            </label>
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="edit-installer-type" value="command" onchange="toggleInstallerType('edit')" /> 1-Line Command
+            </label>
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="edit-installer-type" value="file" onchange="toggleInstallerType('edit')" /> Upload File (≤ 10MB)
+            </label>
+          </div>
 
-        <div class="form-group">
-          <label for="edit-pkg-file-url">Direct Installer File URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
-          <input type="url" id="edit-pkg-file-url" placeholder="https://example.com/downloads/tool-v1.1.0.tar.gz" />
+          <div id="edit-installer-command-container" style="display: none; margin-top: 8px;">
+            <label for="edit-pkg-installer" style="font-size:0.8rem; color:var(--text-muted);">One-Liner Install Command</label>
+            <input type="text" id="edit-pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
+          </div>
+
+          <div id="edit-installer-file-container" style="display: none; margin-top: 8px;">
+            <label for="edit-pkg-file-input" style="font-size:0.8rem; color:var(--text-muted);">Upload Installer File (Max 10MB)</label>
+            <input type="file" id="edit-pkg-file-input" accept="*/*" style="padding: 6px; background: var(--input-bg); color: var(--text);" />
+            <div id="edit-pkg-existing-file-info" style="font-size: 0.8rem; color: var(--link); margin-top: 4px; display: none;"></div>
+            <input type="hidden" id="edit-pkg-file-url" />
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -950,13 +967,28 @@
         </div>
 
         <div class="form-group">
-          <label for="pkg-installer">One-Liner Install Command <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
-          <input type="text" id="pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
-        </div>
+          <label>Installer Type <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+          <div style="display: flex; gap: 16px; margin-bottom: 10px;">
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="submit-installer-type" value="none" checked onchange="toggleInstallerType('submit')" /> None
+            </label>
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="submit-installer-type" value="command" onchange="toggleInstallerType('submit')" /> 1-Line Command
+            </label>
+            <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="radio" name="submit-installer-type" value="file" onchange="toggleInstallerType('submit')" /> Upload File (≤ 10MB)
+            </label>
+          </div>
 
-        <div class="form-group">
-          <label for="pkg-file-url">Direct Installer File URL <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
-          <input type="url" id="pkg-file-url" placeholder="https://example.com/downloads/tool-v1.0.0.tar.gz" />
+          <div id="submit-installer-command-container" style="display: none; margin-top: 8px;">
+            <label for="pkg-installer" style="font-size:0.8rem; color:var(--text-muted);">One-Liner Install Command</label>
+            <input type="text" id="pkg-installer" placeholder="e.g. curl -sSL https://example.com/install.sh | sh" />
+          </div>
+
+          <div id="submit-installer-file-container" style="display: none; margin-top: 8px;">
+            <label for="pkg-file-input" style="font-size:0.8rem; color:var(--text-muted);">Upload Installer File (Max 10MB)</label>
+            <input type="file" id="pkg-file-input" accept="*/*" style="padding: 6px; background: var(--input-bg); color: var(--text);" />
+          </div>
         </div>
 
         <div class="form-group">
@@ -1489,8 +1521,26 @@
       const category = document.getElementById("category").value;
       const cleanDesc = document.getElementById("desc").value.trim();
       const repo_url = document.getElementById("url").value.trim() || "";
-      const installer = document.getElementById("pkg-installer").value.trim();
-      const fileUrl = document.getElementById("pkg-file-url").value.trim();
+
+      const installerType = document.querySelector('input[name="submit-installer-type"]:checked')?.value || 'none';
+      let installer = "";
+      let fileUrl = "";
+
+      if (installerType === 'command') {
+        installer = document.getElementById("pkg-installer").value.trim();
+      } else if (installerType === 'file') {
+        const fileInput = document.getElementById("pkg-file-input");
+        const selectedFile = fileInput?.files?.[0];
+        if (selectedFile) {
+          try {
+            fileUrl = await uploadInstallerFile(selectedFile);
+          } catch (err) {
+            showToast(err.message, true);
+            return;
+          }
+        }
+      }
+
       const submitted_by = document.getElementById("author").value.trim() || `@${currentUserProfile?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'developer')}`;
 
       const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
@@ -1629,6 +1679,40 @@
       document.getElementById('details-modal').classList.remove('active');
     }
 
+    function toggleInstallerType(prefix) {
+      const type = document.querySelector(`input[name="${prefix}-installer-type"]:checked`)?.value || 'none';
+      const cmdBox = document.getElementById(`${prefix}-installer-command-container`);
+      const fileBox = document.getElementById(`${prefix}-installer-file-container`);
+
+      if (cmdBox) cmdBox.style.display = type === 'command' ? 'block' : 'none';
+      if (fileBox) fileBox.style.display = type === 'file' ? 'block' : 'none';
+    }
+
+    async function uploadInstallerFile(file) {
+      const MAX_SIZE = 10 * 1024 * 1024; // 10MB limit
+      if (file.size > MAX_SIZE) {
+        const sizeInMb = (file.size / (1024 * 1024)).toFixed(2);
+        throw new Error(`File size (${sizeInMb}MB) exceeds the maximum allowed limit of 10MB.`);
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('files')
+        .upload(fileName, file);
+
+      if (error) {
+        throw new Error(`Storage upload error: ${error.message}`);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('files')
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    }
+
     function openEditModal(pkgId) {
       const pkg = cachedPackages.find(p => p.id === pkgId);
       if (!pkg) return;
@@ -1648,6 +1732,31 @@
       document.getElementById('edit-url').value = pkg.repo_url || "";
       document.getElementById('edit-pkg-installer').value = installer;
       document.getElementById('edit-pkg-file-url').value = fileUrl;
+
+      // Reset file input
+      const fileInput = document.getElementById('edit-pkg-file-input');
+      if (fileInput) fileInput.value = '';
+
+      const existingFileInfo = document.getElementById('edit-pkg-existing-file-info');
+      if (fileUrl) {
+        existingFileInfo.style.display = 'block';
+        existingFileInfo.innerHTML = `Current file: <a href="${escapeHtml(fileUrl)}" target="_blank" style="color:var(--link)">View File</a>`;
+      } else {
+        existingFileInfo.style.display = 'none';
+        existingFileInfo.innerHTML = '';
+      }
+
+      // Determine installer radio option
+      let selectedType = 'none';
+      if (installer) {
+        selectedType = 'command';
+      } else if (fileUrl) {
+        selectedType = 'file';
+      }
+
+      const radio = document.querySelector(`input[name="edit-installer-type"][value="${selectedType}"]`);
+      if (radio) radio.checked = true;
+      toggleInstallerType('edit');
 
       document.getElementById('edit-modal').classList.add('active');
     }
@@ -1672,8 +1781,27 @@
       const category = document.getElementById("edit-category").value;
       const cleanDesc = document.getElementById("edit-desc").value.trim();
       const repo_url = document.getElementById("edit-url").value.trim() || "";
-      const installer = document.getElementById("edit-pkg-installer").value.trim();
-      const fileUrl = document.getElementById("edit-pkg-file-url").value.trim();
+
+      const installerType = document.querySelector('input[name="edit-installer-type"]:checked')?.value || 'none';
+      let installer = "";
+      let fileUrl = "";
+
+      if (installerType === 'command') {
+        installer = document.getElementById("edit-pkg-installer").value.trim();
+      } else if (installerType === 'file') {
+        const fileInput = document.getElementById("edit-pkg-file-input");
+        const selectedFile = fileInput?.files?.[0];
+        if (selectedFile) {
+          try {
+            fileUrl = await uploadInstallerFile(selectedFile);
+          } catch (err) {
+            showToast(err.message, true);
+            return;
+          }
+        } else {
+          fileUrl = document.getElementById("edit-pkg-file-url").value.trim();
+        }
+      }
 
       const fullDescription = serializePackageMeta(cleanDesc, version, installer, fileUrl);
 
@@ -1701,6 +1829,14 @@
         openAuthModal(false);
         return;
       }
+
+      // Reset form controls
+      const radioNone = document.querySelector('input[name="submit-installer-type"][value="none"]');
+      if (radioNone) radioNone.checked = true;
+      toggleInstallerType('submit');
+      const fileInput = document.getElementById('pkg-file-input');
+      if (fileInput) fileInput.value = '';
+
       document.getElementById('submit-modal').classList.add('active');
     }
 
@@ -1732,6 +1868,8 @@
     }
 
     // Attach to global window object
+    window.toggleInstallerType = toggleInstallerType;
+    window.uploadInstallerFile = uploadInstallerFile;
     window.openAuthModal = openAuthModal;
     window.closeAuthModal = closeAuthModal;
     window.toggleAuthMode = toggleAuthMode;
