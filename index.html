@@ -930,6 +930,9 @@
         <button class="nav-tab" id="tab-btn-tools" onclick="switchTab('tools')">
           <i class="fa-solid fa-terminal"></i> Tools
         </button>
+        <button class="nav-tab" id="tab-btn-mcp" onclick="switchTab('mcp')">
+          <i class="fa-solid fa-key"></i> User MCP Keys
+        </button>
       </nav>
 
       <div class="auth-section">
@@ -1380,6 +1383,56 @@
     </div>
   </div>
 
+  <!-- Create MCP Key Modal -->
+  <div class="modal-overlay" id="create-mcp-key-modal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Create User MCP Key</h3>
+        <button class="close-btn" onclick="closeCreateMcpKeyModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="create-mcp-key-form" onsubmit="handleCreateMcpKey(event)">
+        <div class="form-group">
+          <label for="mcp-key-name">Key Name / Label *</label>
+          <input type="text" id="mcp-key-name" placeholder="e.g. My Claude Desktop MCP Key" required />
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+          <i class="fa-solid fa-circle-info" style="color: var(--link);"></i>
+          Generating an MCP API key will give you access to your user integrations. The full secret key will only be shown once upon creation.
+        </p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCreateMcpKeyModal()">Cancel</button>
+          <button type="submit" class="btn"><i class="fa-solid fa-key"></i> Generate Key</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Display New MCP Key Modal -->
+  <div class="modal-overlay" id="display-mcp-key-modal">
+    <div class="modal" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-shield-halved" style="color: var(--accent-hover);"></i> MCP API Key Generated</h3>
+        <button class="close-btn" onclick="closeDisplayMcpKeyModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="background: rgba(35, 134, 54, 0.15); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px; margin-bottom: 16px;">
+        <strong style="color: #3fb950; font-size: 0.95rem;"><i class="fa-solid fa-circle-check"></i> Save your key now!</strong>
+        <p style="font-size: 0.85rem; color: var(--text); margin-top: 4px;">
+          This is the only time your full MCP key will be displayed. Please copy and store it securely.
+        </p>
+      </div>
+      <div class="form-group">
+        <label>Your MCP API Key</label>
+        <div style="background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px; font-family: monospace; font-size: 0.9rem; color: var(--link); display: flex; align-items: center; justify-content: space-between;">
+          <code id="new-mcp-key-secret" style="word-break: break-all;"></code>
+          <button class="btn btn-outline btn-sm" onclick="copyText(document.getElementById('new-mcp-key-secret').textContent)" style="margin-left: 8px;">Copy</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeDisplayMcpKeyModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Package Modal -->
   <div class="modal-overlay" id="edit-modal">
     <div class="modal" style="max-width: 580px;">
@@ -1619,6 +1672,12 @@
         primaryBtn.style.display = 'inline-flex';
         primaryBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Submit Tool`;
         primaryBtn.onclick = openSubmitModal;
+      } else if (tab === 'mcp') {
+        heroTitle.textContent = "User MCP Keys";
+        heroSubtitle.textContent = "Manage your Model Context Protocol (MCP) API keys for AI assistants and automation tools.";
+        primaryBtn.style.display = 'inline-flex';
+        primaryBtn.innerHTML = `<i class="fa-solid fa-key"></i> Create MCP Key`;
+        primaryBtn.onclick = openCreateMcpKeyModal;
       }
 
       loadCurrentTabData();
@@ -1629,6 +1688,8 @@
         openSnippetModal();
       } else if (currentTab === 'tools') {
         openSubmitModal();
+      } else if (currentTab === 'mcp') {
+        openCreateMcpKeyModal();
       } else {
         openPostModal();
       }
@@ -1645,6 +1706,8 @@
         await loadMessagesInterface();
       } else if (currentTab === 'tools') {
         await loadPackages();
+      } else if (currentTab === 'mcp') {
+        await loadMcpKeys();
       }
       updateStats();
     }
@@ -2523,7 +2586,156 @@
     }
 
     // ------------------------------------
-    // 7. TOOLS HUB PACKAGES INTEGRATION
+    // 7. USER MCP KEYS MANAGEMENT
+    // ------------------------------------
+    async function loadMcpKeys() {
+      const container = document.getElementById('tab-content-area');
+      if (!currentUser) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 40px; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--card-border);">
+            <h3><i class="fa-solid fa-lock" style="color: var(--link);"></i> Sign In Required</h3>
+            <p style="color: var(--text-muted); margin: 10px 0 20px;">Please sign in to view and manage your MCP API keys.</p>
+            <button class="btn" onclick="openAuthModal(false)">Sign In</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>`;
+
+      const { data: keys, error } = await supabase
+        .from('mcp_api_keys')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        container.innerHTML = `<p style="color:var(--danger);">Error loading MCP keys: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      if (!keys || keys.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 1px dashed var(--card-border);">
+            <i class="fa-solid fa-key" style="font-size: 2rem; margin-bottom: 12px; display: block; color: var(--link);"></i>
+            <h3>No MCP Keys Found</h3>
+            <p style="margin: 8px 0 16px;">Create your first MCP API key to connect your Model Context Protocol client.</p>
+            <button class="btn" onclick="openCreateMcpKeyModal()"><i class="fa-solid fa-plus"></i> Create MCP Key</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = keys.map(k => {
+        return `
+          <div class="card">
+            <div class="card-content">
+              <div class="card-title-row">
+                <h4 class="card-title" style="color: var(--text-heading); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-key" style="color: var(--link);"></i> ${escapeHtml(k.name)}
+                </h4>
+                <span class="badge" style="background: rgba(88, 166, 255, 0.15); color: var(--link); border-color: rgba(88, 166, 255, 0.3); font-family: monospace; font-size: 0.85rem;">${escapeHtml(k.key_prefix)}...</span>
+              </div>
+              <div class="card-meta" style="margin-top: 12px;">
+                <span><i class="fa-regular fa-calendar"></i> Created: ${formatTimeAgo(k.created_at)}</span>
+                <span><i class="fa-solid fa-clock-rotate-left"></i> Last used: ${k.last_used_at ? formatTimeAgo(k.last_used_at) : 'Never'}</span>
+                <div style="margin-left: auto;">
+                  <button class="btn btn-danger btn-sm" onclick="deleteMcpKey('${k.id}', '${escapeHtml(k.name)}')">
+                    <i class="fa-solid fa-trash"></i> Delete Key
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCreateMcpKeyModal() {
+      if (!currentUser) {
+        showToast("Please sign in or create an account to make MCP keys.", true);
+        openAuthModal(false);
+        return;
+      }
+      document.getElementById('create-mcp-key-modal').classList.add('active');
+    }
+
+    function closeCreateMcpKeyModal() {
+      document.getElementById('create-mcp-key-modal').classList.remove('active');
+    }
+
+    function closeDisplayMcpKeyModal() {
+      document.getElementById('display-mcp-key-modal').classList.remove('active');
+    }
+
+    async function hashSha256(text) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function handleCreateMcpKey(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const name = document.getElementById('mcp-key-name').value.trim();
+      if (!name) return;
+
+      // Generate random key string
+      const randomBytes = new Uint8Array(24);
+      crypto.getRandomValues(randomBytes);
+      const randomHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      const fullSecretKey = `mcp_live_${randomHex}`;
+      const keyPrefix = fullSecretKey.substring(0, 12);
+
+      const keyHash = await hashSha256(fullSecretKey);
+
+      const { error } = await supabase.from('mcp_api_keys').insert([{
+        user_id: currentUser.id,
+        name: name,
+        key_prefix: keyPrefix,
+        key_hash: keyHash
+      }]);
+
+      if (error) {
+        showToast("Error creating MCP Key: " + error.message, true);
+      } else {
+        showToast("MCP Key created successfully!");
+        closeCreateMcpKeyModal();
+        e.target.reset();
+
+        document.getElementById('new-mcp-key-secret').textContent = fullSecretKey;
+        document.getElementById('display-mcp-key-modal').classList.add('active');
+
+        if (currentTab === 'mcp') {
+          loadMcpKeys();
+        }
+      }
+    }
+
+    async function deleteMcpKey(keyId, keyName) {
+      if (!confirm(`Are you sure you want to delete the MCP Key "${keyName}"? AI services using this key will no longer work.`)) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('mcp_api_keys')
+        .delete()
+        .eq('id', keyId)
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        showToast("Error deleting MCP Key: " + error.message, true);
+      } else {
+        showToast("MCP Key deleted.");
+        loadMcpKeys();
+      }
+    }
+
+    // ------------------------------------
+    // 8. TOOLS HUB PACKAGES INTEGRATION
     // ------------------------------------
     async function loadPackages() {
       const container = document.getElementById('tab-content-area');
@@ -2960,6 +3172,12 @@
     window.handleSearch = handleSearch;
     window.copyRepoLink = copyRepoLink;
     window.copyText = copyText;
+    window.loadMcpKeys = loadMcpKeys;
+    window.openCreateMcpKeyModal = openCreateMcpKeyModal;
+    window.closeCreateMcpKeyModal = closeCreateMcpKeyModal;
+    window.closeDisplayMcpKeyModal = closeDisplayMcpKeyModal;
+    window.handleCreateMcpKey = handleCreateMcpKey;
+    window.deleteMcpKey = deleteMcpKey;
 
     // Check for payment status URL parameters
     const urlParams = new URLSearchParams(window.location.search);

@@ -151,6 +151,11 @@ for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+create policy "Users can delete their own MCP keys"
+on public.mcp_api_keys
+for delete
+using (auth.uid() = user_id);
+
 create policy "Package owners can delete their packages"
 on public.packages
 for delete
