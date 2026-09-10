@@ -26,11 +26,15 @@
       --accent-hover: #2ea043;
       --link: #58a6ff;
       --danger: #f85149;
+      --warning: #d29922;
       --tag-bg: #21262d;
       --input-bg: #0d1117;
       --input-border: #30363d;
       --radius: 10px;
       --shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+      --shadow-glow: 0 0 20px rgba(88, 166, 255, 0.15);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     * {
@@ -40,13 +44,14 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--font-sans);
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
@@ -797,6 +802,172 @@
       max-height: 300px;
     }
 
+    /* MCP Keys Page Custom Styling */
+    .mcp-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mcp-header-card {
+      background: linear-gradient(135deg, rgba(31, 111, 235, 0.12), rgba(35, 134, 54, 0.08));
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .mcp-header-info h3 {
+      color: var(--text-heading);
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mcp-header-info p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .mcp-key-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .mcp-key-card:hover {
+      border-color: rgba(88, 166, 255, 0.35);
+      background: var(--card-hover);
+      box-shadow: var(--shadow);
+    }
+
+    .mcp-key-card.revoked {
+      opacity: 0.75;
+      border-color: rgba(218, 54, 51, 0.3);
+      background: rgba(218, 54, 51, 0.03);
+    }
+
+    .mcp-key-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mcp-key-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mcp-key-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+
+    .mcp-prefix-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--link);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-active {
+      background: rgba(35, 134, 54, 0.18);
+      color: #3fb950;
+      border: 1px solid rgba(46, 160, 67, 0.4);
+    }
+
+    .status-revoked {
+      background: rgba(218, 54, 51, 0.18);
+      color: var(--danger);
+      border: 1px solid rgba(218, 54, 51, 0.4);
+    }
+
+    .mcp-key-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mcp-quickstart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 24px;
+    }
+
+    .mcp-quickstart-card h3 {
+      font-size: 1.15rem;
+      color: var(--text-heading);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-preview-box {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #79c0ff;
+      position: relative;
+      margin-top: 10px;
+      overflow-x: auto;
+    }
+
+    .copy-code-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #21262d;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .copy-code-btn:hover {
+      background: #30363d;
+      color: var(--text-heading);
+    }
+
     /* Media Queries for Enhanced Responsiveness */
     @media (max-width: 768px) {
       header {
@@ -1387,7 +1558,7 @@
   <div class="modal-overlay" id="create-mcp-key-modal">
     <div class="modal" style="max-width: 500px;">
       <div class="modal-header">
-        <h3>Create User MCP Key</h3>
+        <h3 style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-key" style="color: var(--link);"></i> Create User MCP Key</h3>
         <button class="close-btn" onclick="closeCreateMcpKeyModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <form id="create-mcp-key-form" onsubmit="handleCreateMcpKey(event)">
@@ -1395,10 +1566,12 @@
           <label for="mcp-key-name">Key Name / Label *</label>
           <input type="text" id="mcp-key-name" placeholder="e.g. My Claude Desktop MCP Key" required />
         </div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-          <i class="fa-solid fa-circle-info" style="color: var(--link);"></i>
-          Generating an MCP API key will give you access to your user integrations. The full secret key will only be shown once upon creation.
-        </p>
+        <div style="background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.25); border-radius: var(--radius); padding: 12px; margin-bottom: 16px;">
+          <strong style="color: var(--link); font-size: 0.88rem;"><i class="fa-solid fa-shield" style="margin-right: 4px;"></i> Security Notice</strong>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+            Generating an MCP API key grants access to your user integrations. The full secret key will only be shown once upon creation and cannot be retrieved later.
+          </p>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeCreateMcpKeyModal()">Cancel</button>
           <button type="submit" class="btn"><i class="fa-solid fa-key"></i> Generate Key</button>
@@ -1411,24 +1584,24 @@
   <div class="modal-overlay" id="display-mcp-key-modal">
     <div class="modal" style="max-width: 540px;">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-shield-halved" style="color: var(--accent-hover);"></i> MCP API Key Generated</h3>
+        <h3 style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-shield-halved" style="color: var(--accent-hover);"></i> MCP API Key Generated</h3>
         <button class="close-btn" onclick="closeDisplayMcpKeyModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div style="background: rgba(35, 134, 54, 0.15); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px; margin-bottom: 16px;">
         <strong style="color: #3fb950; font-size: 0.95rem;"><i class="fa-solid fa-circle-check"></i> Save your key now!</strong>
         <p style="font-size: 0.85rem; color: var(--text); margin-top: 4px;">
-          This is the only time your full MCP key will be displayed. Please copy and store it securely.
+          This is the only time your full MCP key secret will be displayed. Please copy and store it securely in a safe location.
         </p>
       </div>
       <div class="form-group">
-        <label>Your MCP API Key</label>
-        <div style="background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 10px; font-family: monospace; font-size: 0.9rem; color: var(--link); display: flex; align-items: center; justify-content: space-between;">
-          <code id="new-mcp-key-secret" style="word-break: break-all;"></code>
-          <button class="btn btn-outline btn-sm" onclick="copyText(document.getElementById('new-mcp-key-secret').textContent)" style="margin-left: 8px;">Copy</button>
+        <label>Your MCP API Key Secret</label>
+        <div style="background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 12px; font-family: var(--font-mono); font-size: 0.9rem; color: #79c0ff; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <code id="new-mcp-key-secret" style="word-break: break-all; flex: 1;"></code>
+          <button class="btn btn-outline btn-sm" onclick="copyText(document.getElementById('new-mcp-key-secret').textContent)"><i class="fa-regular fa-copy"></i> Copy</button>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn" onclick="closeDisplayMcpKeyModal()">Done</button>
+        <button type="button" class="btn" onclick="closeDisplayMcpKeyModal()">I Have Saved My Key</button>
       </div>
     </div>
   </div>
@@ -2614,41 +2787,105 @@
         return;
       }
 
+      const quickstartHtml = `
+        <div class="mcp-quickstart-card">
+          <h3><i class="fa-solid fa-book-bookmark" style="color: var(--link);"></i> Model Context Protocol Quickstart</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;">
+            Connect WebDev Social tools and APIs to AI desktop clients such as Claude Desktop, Cursor, or custom MCP clients.
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+            <div>
+              <strong style="font-size: 0.85rem; color: var(--text-heading);"><i class="fa-solid fa-desktop"></i> Claude Desktop Config (` + "`claude_desktop_config.json`" + `)</strong>
+              <div class="code-preview-box">
+                <button class="copy-code-btn" onclick="copyText(this.parentElement.querySelector('code').textContent)">Copy</button>
+                <code>{
+  "mcpServers": {
+    "webdev-social": {
+      "command": "npx",
+      "args": ["-y", "@webdev-social/mcp-server"],
+      "env": {
+        "WEBDEV_SOCIAL_API_KEY": "YOUR_MCP_KEY_HERE"
+      }
+    }
+  }
+}</code>
+              </div>
+            </div>
+            <div>
+              <strong style="font-size: 0.85rem; color: var(--text-heading);"><i class="fa-solid fa-code"></i> Cursor / MCP Client Integration</strong>
+              <div class="code-preview-box">
+                <button class="copy-code-btn" onclick="copyText(this.parentElement.querySelector('code').textContent)">Copy</button>
+                <code># Endpoint URL:
+https://bdehlwonhpafijrqsels.supabase.co/functions/v1/mcp
+
+# Authorization Header:
+Authorization: Bearer YOUR_MCP_KEY_HERE</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
       if (!keys || keys.length === 0) {
         container.innerHTML = `
-          <div style="text-align:center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 1px dashed var(--card-border);">
-            <i class="fa-solid fa-key" style="font-size: 2rem; margin-bottom: 12px; display: block; color: var(--link);"></i>
-            <h3>No MCP Keys Found</h3>
-            <p style="margin: 8px 0 16px;">Create your first MCP API key to connect your Model Context Protocol client.</p>
+          <div style="text-align:center; padding: 36px 20px; color: var(--text-muted); background: var(--card-bg); border-radius: var(--radius); border: 1px dashed var(--card-border);">
+            <i class="fa-solid fa-key" style="font-size: 2.2rem; margin-bottom: 12px; display: block; color: var(--link);"></i>
+            <h3 style="color: var(--text-heading); margin-bottom: 6px;">No MCP Keys Found</h3>
+            <p style="margin: 0 auto 16px; max-width: 460px; font-size: 0.9rem;">Generate an MCP API key to connect your Model Context Protocol client to WebDev Social.</p>
             <button class="btn" onclick="openCreateMcpKeyModal()"><i class="fa-solid fa-plus"></i> Create MCP Key</button>
           </div>
+          ${quickstartHtml}
         `;
         return;
       }
 
-      container.innerHTML = keys.map(k => {
+      const keysListHtml = keys.map(k => {
+        const isRevoked = !!k.revoked_at;
+        const statusBadge = isRevoked
+          ? `<span class="status-badge status-revoked"><i class="fa-solid fa-circle-xmark"></i> Revoked</span>`
+          : `<span class="status-badge status-active"><i class="fa-solid fa-circle-check"></i> Active</span>`;
+
         return `
-          <div class="card">
-            <div class="card-content">
-              <div class="card-title-row">
-                <h4 class="card-title" style="color: var(--text-heading); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                  <i class="fa-solid fa-key" style="color: var(--link);"></i> ${escapeHtml(k.name)}
-                </h4>
-                <span class="badge" style="background: rgba(88, 166, 255, 0.15); color: var(--link); border-color: rgba(88, 166, 255, 0.3); font-family: monospace; font-size: 0.85rem;">${escapeHtml(k.key_prefix)}...</span>
+          <div class="mcp-key-card ${isRevoked ? 'revoked' : ''}">
+            <div class="mcp-key-main">
+              <div class="mcp-key-title-row">
+                <span class="mcp-key-name"><i class="fa-solid fa-key" style="color: ${isRevoked ? 'var(--text-muted)' : 'var(--link)'}; margin-right: 4px;"></i> ${escapeHtml(k.name)}</span>
+                <span class="mcp-prefix-badge">${escapeHtml(k.key_prefix)}...</span>
+                ${statusBadge}
               </div>
-              <div class="card-meta" style="margin-top: 12px;">
+              <div class="card-meta" style="margin-top: 6px;">
                 <span><i class="fa-regular fa-calendar"></i> Created: ${formatTimeAgo(k.created_at)}</span>
                 <span><i class="fa-solid fa-clock-rotate-left"></i> Last used: ${k.last_used_at ? formatTimeAgo(k.last_used_at) : 'Never'}</span>
-                <div style="margin-left: auto;">
-                  <button class="btn btn-danger btn-sm" onclick="deleteMcpKey('${k.id}', '${escapeHtml(k.name)}')">
-                    <i class="fa-solid fa-trash"></i> Delete Key
-                  </button>
-                </div>
+                ${isRevoked ? `<span><i class="fa-solid fa-ban" style="color: var(--danger);"></i> Revoked: ${formatTimeAgo(k.revoked_at)}</span>` : ''}
               </div>
+            </div>
+            <div class="mcp-key-actions">
+              ${!isRevoked ? `
+                <button class="btn btn-secondary btn-sm" onclick="revokeMcpKey('${k.id}', '${escapeHtml(k.name)}')">
+                  <i class="fa-solid fa-ban" style="color: var(--warning);"></i> Revoke
+                </button>
+              ` : ''}
+              <button class="btn btn-danger btn-sm" onclick="deleteMcpKey('${k.id}', '${escapeHtml(k.name)}')">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
             </div>
           </div>
         `;
       }).join('');
+
+      container.innerHTML = `
+        <div class="mcp-layout">
+          <div class="mcp-header-card">
+            <div class="mcp-header-info">
+              <h3><i class="fa-solid fa-shield-halved" style="color: var(--link);"></i> Manage API Access Keys</h3>
+              <p>MCP keys allow external AI assistants and integrations to read and interact with your WebDev Social account.</p>
+            </div>
+            <button class="btn" onclick="openCreateMcpKeyModal()"><i class="fa-solid fa-plus"></i> Create MCP Key</button>
+          </div>
+          <div>${keysListHtml}</div>
+          ${quickstartHtml}
+        </div>
+      `;
     }
 
     function openCreateMcpKeyModal() {
@@ -2712,6 +2949,25 @@
         if (currentTab === 'mcp') {
           loadMcpKeys();
         }
+      }
+    }
+
+    async function revokeMcpKey(keyId, keyName) {
+      if (!confirm(`Are you sure you want to revoke the MCP Key "${keyName}"? Integrations using this key will immediately lose access.`)) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('mcp_api_keys')
+        .update({ revoked_at: new Date().toISOString() })
+        .eq('id', keyId)
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        showToast("Error revoking MCP Key: " + error.message, true);
+      } else {
+        showToast(`MCP Key "${keyName}" revoked.`);
+        loadMcpKeys();
       }
     }
 
@@ -3177,6 +3433,7 @@
     window.closeCreateMcpKeyModal = closeCreateMcpKeyModal;
     window.closeDisplayMcpKeyModal = closeDisplayMcpKeyModal;
     window.handleCreateMcpKey = handleCreateMcpKey;
+    window.revokeMcpKey = revokeMcpKey;
     window.deleteMcpKey = deleteMcpKey;
 
     // Check for payment status URL parameters
